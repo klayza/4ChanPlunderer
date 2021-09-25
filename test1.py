@@ -133,6 +133,8 @@ def animate(seconds):
     sys.stdout.write('\r')
 
 
+
+# Will determine what the main menu is supposed to look like
 def mainmenuInit(menuState):
     if menuState == "start":
         return {"color": "green", "state": "normal", "text": "Start", "menuState": "started"}
@@ -145,7 +147,7 @@ def mainmenuControls(menuState):
     elif menuState == "started":
         imageSaverStop()
 
-addSearchIndex("Wallpaper", "wg", ["comfy", "nature"], ["uncomfortable", "inside"]) 
+#addSearchIndex("Wallpaper", "wg", ["comfy", "nature"], ["uncomfortable", "inside"]) 
 
 mainMenu()
 root.mainloop()
