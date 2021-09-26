@@ -1,99 +1,18 @@
 from urllib import request
 from datetime import datetime
 from tkinter import *
-from tkinter import messagebox
 import requests
 import os
 import time
 import sys
-import ast
+import animation
 
-destination = "Desktop"
+# Console based version
 
-root = Tk()
-root.title("4Chan-App")
-root.geometry("400x400")
+destination = "E:/Media/4Chan"
 
-
-def Clear():
-    for widget in root.winfo_children():
-        widget.destroy()
-
-def mainmenuControls(menuState):
-    if menuState == "start" and selectionsExist():
-        mainMenu("started")
-        print("Starting Search")
-        print(getSelections(), "here")
-        for selections in getSelections():
-            imageSaver(selections)
-
-    elif menuState == "started":
-        imageSaverStop()
-
-
-# Will determine what the main menu is supposed to look like
-def mainmenuInit(menuState):
-    if menuState == "start":
-        return {"color": "green", "state": "normal", "text": "Start", "menuState": "started"}
-    elif menuState == "started":
-        return {"color": "red", "state": "disabled", "text": "Stop", "menuState": "start"}
-
-
-def mainMenu(menuState="start"):
-    Clear()
-    settings = mainmenuInit(menuState)
-    Button(root, text=settings["text"], bg=settings["color"],command=lambda:mainmenuControls(menuState)).pack(fill="x", pady=2)
-    Button(root, text="Presets", command=lambda:addQueryMenu()).pack(fill="x", pady=2)
-    Button(root, text="Console").pack(fill="x", pady=2)
-    Button(root, text="Settings").pack(fill="x", pady=2)
-    Button(root, text="Exit", bg="red", command=lambda:root.destroy()).pack(fill="x", pady=2)
-
-
-
-def addSearchIndex(title, board, whitelist, blacklist, command="none"):
-    if command == "none":
-        title = title.get()
-        board = board.get()
-        whitelist = [s.strip() + ',' for s in whitelist.get().split(',') if s.strip()]
-        blacklist = [s.strip() + ',' for s in blacklist.get().split(',') if s.strip()]
-
-
-    selections = [title, board, [item for item in whitelist], [item for item in blacklist]]
-    f = open("Selections.txt", "a+")
-    f.write(str(selections) + "\n" )
-    f.close
-    addQueryMenu()
-
-def addQueryMenu():
-    Clear()
-
-    title = StringVar()
-    board = StringVar()
-    whitelist = StringVar()
-    blacklist = StringVar()
-
-    Label(root, text="Title").pack(fill="x", pady=2)
-    Label(root, text="Board").pack(fill="x", pady=2)
-    Label(root, text="Whitelist").pack(fill="x", pady=2)
-    Label(root, text="Blacklist").pack(fill="x", pady=2)
-
-    e1 = Entry(root)
-    e2 = Entry(root)
-    e3 = Entry(root)
-    e4 = Entry(root)
-
-    e1.pack(fill="x", pady=2)
-    e2.pack(fill="x", pady=2)
-    e3.pack(fill="x", pady=2)
-    e4.pack(fill="x", pady=2)
-
-    Button(root, text="Submit", command=lambda:addSearchIndex(e1, e2, e3, e4)).pack(anchor="s")
-    Button(root, text="Back", command=lambda:mainMenu()).pack(anchor="s")
-
-
-
+# Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination=destination):
-    print("95", selections, len(selections), type(selections))
     count = 0
     json = requests.get("https://a.4cdn.org/" + selections[1] + "/catalog.json").json()
 
@@ -159,9 +78,6 @@ def imageSaver(selections, destination=destination):
                         #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
 
 
-def imageSaverStop():
-    exit()
-
 def titleCleanup(text):
     tag = False
     a = ""
@@ -180,7 +96,7 @@ def titleCleanup(text):
         return a
     return a
 
-# Simple animation
+# Simple animation to
 def animate(seconds):
     for i in range(seconds // 4):
         sys.stdout.write('\rSearching')
@@ -194,46 +110,12 @@ def animate(seconds):
     sys.stdout.write('\r')
 
 
-def selectionsExist():
-    selections = getSelections()
-    if selections != None:
-        return True
-    elif selections == None:
-        return False
+if __name__ == "__main__":
+    print("---------[Starting Search]---------")
+    while True:
+        # [Title, Board, [Whitelists], [Blacklists]]
+        imageSaver(["My Filter", "wg", ["nature", "forest"], ["industrial", "city"]])
+        animate(360)
 
 
-# Returns a list of all lines in Selections.txt
-def getSelections():
-    try:
-        f = open("Selections.txt", "r+")
-        ls = []
-    except:
-        messagebox.showinfo(title="Warning", message="Before proceeding please enter a search query")
-        mainMenu("start")
-    else:
-        for line in f.readlines():
-            temp = line.splitlines()
-            print("Temp:", temp)
-            w = str(temp)[2:-2]
-            print("1", w)
-            w = w.replace(",',", "',")
-            w = w.replace(",']", "']")
-            print("2", w)
-            w = ast.literal_eval(w)
-            ls.append(w)
-            print("3", w)
-            print("222", w, type(w))
-        f.close()
-        print("\n\n\n", ls, "\n\n\n")
-        return ls
 
-
-addSearchIndex("Wallpaper", "wg", ["comfy", "nature", "another-one"], ["uncomfortable", "inside"], command="manual")
-#imageSaver(custom, "4Chan")
-
-mainMenu()
-root.mainloop()
-
-# Image Saver Works
-# getSelections needs to get rid of commas - Done
-# 
