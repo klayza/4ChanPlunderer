@@ -228,7 +228,7 @@ def getSelections():
         return ls
 
 
-addSearchIndex("Wallpaper", "wg", ["comfy", "nature", "another-one"], ["uncomfortable", "inside"], command="manual")
+#addSearchIndex("Wallpaper", "wg", ["comfy", "nature", "another-one"], ["uncomfortable", "inside"], command="manual")
 #imageSaver(custom, "4Chan")
 
 mainMenu()
