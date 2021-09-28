@@ -5,7 +5,6 @@ import requests
 import os
 import time
 import sys
-import animation
 
 root = Tk()
 

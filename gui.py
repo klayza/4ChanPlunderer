@@ -19,10 +19,11 @@ def mainMenu():
     Clear()
     Button(root, text="Here").pack()
 
-def addSearchIndex():
-    pass
-
-
+def addSearchIndex(title, board, whitelist, blacklist):
+    custom = [title, board, [item for item in whitelist], [item for item in blacklist]]
+    f = open("Presets.txt", "a+")
+    f.write(custom)
+    f.close
 
 root.title("4Chan-App")
 
