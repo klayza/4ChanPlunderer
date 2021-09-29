@@ -1,154 +1,42 @@
-from urllib import request
-from datetime import datetime
 from tkinter import *
-import requests
-import os
-import time
-import sys
-
+import ast
+from tkinter import messagebox
 root = Tk()
-root.title("4Chan-App")
+def getSelections():
+    try:
+        f = open("Selections.txt", "r+")
+        ls = []
+    except:
+        messagebox.showinfo(title="Warning", message="Before proceeding please enter a search query")
+        print("Home")
+    else:
+        for line in f.readlines():
+            temp = line.splitlines()
+            w = str(temp)[2:-2]
+            w = w.replace(",',", "',")
+            w = w.replace(",']", "']")
+            w = ast.literal_eval(w)
+            ls.append(w)
+        f.close()
+        print("\n\n\n", ls, "\n\n\n")
+        return ls
 
-def Clear():
-    for widget in root.winfo_children():
-        widget.destroy()
+def getSelection(varlist):
+    for ivar in varlist:
+        print(ivar.get())
 
-def mainMenu(menuState="start"):
-    Clear()
-    settings = mainmenuInit(menuState)
-    Button(root, text=settings["text"], bg=settings["color"],command=lambda: mainmenuControls(menuState)).pack()
-    Button(root, text="Presets").pack()
-    Button(root, text="Console").pack()
-    Button(root, text="Settings").pack()
-    Button(root, text="Exit").pack()
+def checkBoxes():
+    for i in getSelections():
+        i = i[0]
+        count = 0
+        ivar = i
+        print(i)
+        print(ivar + str(count))
+        ivar = StringVar()
+        i = Checkbutton(root, text=i,variable=ivar, onvalue=1)
+        i.pack()
+    Button(root, text="submit", command=lambda:getSelection(ivar)).pack()
 
+checkBoxes()
 
-def addSearchIndex(title, board, whitelist, blacklist):
-    custom = [title, board, [item for item in whitelist], [item for item in blacklist]]
-    f = open("Presets.txt", "a+")
-    f.write("\n" + str(custom))
-    f.close
-
-
-def imageSaver(board, preset, blacklist="example", destination="E:/Media/4Chan"):
-    count = 0
-    json = requests.get("https://a.4cdn.org/" + board + "/catalog.json").json()
-
-    # Sorts by the threads in each page
-    for page in range(len(json) - 1):
-
-        # Sorts through individual threads within a page
-        for thread in range(len(json[1]["threads"]) - 1):
-            downloading = True
-
-            # Gets the title from the metadata found within the thread's .json
-            try:
-                title = titleCleanup(str(json[page]["threads"][thread]["com"]).lower() + str(json[page]["threads"][thread]["sub"]).lower())
-            except:
-                try:
-                    title = titleCleanup(str(json[page]["threads"][thread]["com"]).lower())
-                except:
-                    continue
-
-            if blacklist in title:
-                continue
-
-            # Adds keyword to the dictionary if not already in it
-            if preset not in presets:
-                presets[preset] = [preset]
-
-            # Searches through threads when given the keyword of the preset
-            for phrase in presets[preset]:
-
-                # Will go into this block if the comment of a post matches one of the keywords
-                if phrase in title:
-                    # Gets the .json of the thread
-                    c = requests.get("https://a.4cdn.org/" + board + "/thread/" + str(json[page]["threads"][thread]["no"]) + ".json").json()
-
-                    # Looks through the .json of the individual comment using the range of however many comments are within the thread
-                    for comment in range(len(c["posts"]) - 1):
-
-                        # Sometimes there are no images on a comment hence the try, except
-                        try:
-                            link = "https://is2.4chan.org/" + board + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]
-                        except:
-                            continue
-
-                        # If there is no path with the same board and preset name it makes one and starts downloading the images there
-                        if not os.path.exists(destination + "/" + board + "/" + preset.capitalize()):
-                            os.makedirs(destination + "/" + board + "/" + preset.capitalize())
-
-                        # If the same file exists it continues to avoid downloading again
-                        if os.path.exists(destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]):
-                            continue
-
-                        request.urlretrieve(link, destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
-                        count += 1
-
-                        if downloading:
-                            print("--------------------------------------------------------------------------------------------")
-                            print(datetime.now().strftime(
-                                "%H:%M") + " | Link: https://boards.4chan.org/" + board + "/thread/" + str(
-                                json[page]["threads"][thread]["no"]))
-                            print(datetime.now().strftime("%H:%M") + " | Thread: " + title + " | /" + board + "/")
-                            print(datetime.now().strftime("%H:%M") + " | Match: " + phrase)
-
-                        print(datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
-                        downloading = False
-                        #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
-
-
-def imageSaverStop():
-    pass
-
-def titleCleanup(text):
-    tag = False
-    a = ""
-    apostrophe = "&#039;"
-    for letter in text:
-            if letter == "<":
-                tag = True
-            elif letter == ">":
-                tag = False
-            elif tag:
-                continue
-            else:
-                a += letter
-    if apostrophe in a:
-        a = a.replace(apostrophe, "'")
-        return a
-    return a
-
-# Simple animation
-def animate(seconds):
-    for i in range(seconds // 4):
-        sys.stdout.write('\rSearching')
-        time.sleep(1)
-        sys.stdout.write('\rSearching .')
-        time.sleep(1)
-        sys.stdout.write('\rSearching . .')
-        time.sleep(1)
-        sys.stdout.write('\rSearching . . .')
-        time.sleep(1)
-    sys.stdout.write('\r')
-
-
-
-# Will determine what the main menu is supposed to look like
-def mainmenuInit(menuState):
-    if menuState == "start":
-        return {"color": "green", "state": "normal", "text": "Start", "menuState": "started"}
-    elif menuState == "started":
-        return {"color": "red", "state": "disabled", "text": "Stop", "menuState": "start"}
-
-def mainmenuControls(menuState):
-    if menuState == "start":
-        imageSaver()
-    elif menuState == "started":
-        imageSaverStop()
-
-#addSearchIndex("Wallpaper", "wg", ["comfy", "nature"], ["uncomfortable", "inside"]) 
-
-mainMenu()
 root.mainloop()
-

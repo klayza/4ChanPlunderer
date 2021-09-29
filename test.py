@@ -6,7 +6,7 @@ import requests
 import os
 import time
 import sys
-import ast
+import ast  # For string to list
 
 destination = "Desktop"
 
