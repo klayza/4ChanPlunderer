@@ -22,20 +22,24 @@ def getSelections():
         return ls
 
 def getSelection(varlist):
-    for ivar in varlist:
-        print(ivar.get())
+    for titlevar in varlist:
+        print(titlevar)
 
 def checkBoxes():
-    for i in getSelections():
-        i = i[0]
-        count = 0
-        ivar = i
-        print(i)
-        print(ivar + str(count))
-        ivar = StringVar()
-        i = Checkbutton(root, text=i,variable=ivar, onvalue=1)
-        i.pack()
-    Button(root, text="submit", command=lambda:getSelection(ivar)).pack()
+    count = 0
+    for title in getSelections():
+        varlist = []
+        title = title[0]
+
+        titlevar = title + str(count)
+        print("Label: " + title)
+        print("Tvar: " + titlevar)
+        titlevar = StringVar()
+        tilevar = Checkbutton(root, text=title,variable=titlevar,onvalue=1)
+        tilevar.pack()
+        varlist.append(tilevar)
+        count += 1
+    Button(root, text="submit", command=lambda:getSelection(varlist)).pack()
 
 checkBoxes()
 
