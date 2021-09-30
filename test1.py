@@ -8,7 +8,9 @@ import os
 import time
 import sys
 import ast
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 destination = "Desktop"
 
 root = Tk()
@@ -28,6 +30,8 @@ def mainmenuControls(menuState):
         for selections in getSelections():
             thread = threading.Thread(target=imageSaver, args=(selections, ))
             thread.start()
+            thread.join()
+        mainMenu("started")
 
     elif menuState == "started":
         imageSaverStop()
@@ -157,6 +161,7 @@ def imageSaver(selections, destination=destination):
 
                         print(datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
                         downloading = False
+    return None
                         #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
 
 

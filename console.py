@@ -5,8 +5,9 @@ import requests
 import os
 import time
 import sys
-import animation
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 # Console based version
 
 destination = "E:/Media/4Chan"
