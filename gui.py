@@ -5,9 +5,10 @@ import requests
 import os
 import time
 import sys
-import animation
+import ssl
 
-destination = "C:/Users/Administrator/Desktop/4Chan"
+ssl._create_default_https_context = ssl._create_unverified_context
+destination = "C:/Users/user/Desktop/4Chan"
 
 root = Tk()
 

@@ -5,6 +5,9 @@ import requests
 import os
 import time
 import sys
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 root = Tk()
 
