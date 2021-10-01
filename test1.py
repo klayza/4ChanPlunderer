@@ -1,7 +1,14 @@
 from tkinter import *
 import ast
 from tkinter import messagebox
+
 root = Tk()
+
+def Clear():
+    for widget in root.winfo_children():
+        widget.destroy()
+
+
 def getSelections():
     try:
         f = open("Selections.txt", "r+")
@@ -18,28 +25,47 @@ def getSelections():
             w = ast.literal_eval(w)
             ls.append(w)
         f.close()
-        print("\n\n\n", ls, "\n\n\n")
         return ls
 
-def getSelection(varlist):
-    for titlevar in varlist:
-        print(titlevar)
 
-def checkBoxes():
+# When a list of stringvars is passed in it will get the correlating values using .get()
+# If a checkmark is detected it will write it to a file called EnabledSelections.txt
+def addEnabledSelection(varlist):  
     count = 0
-    for title in getSelections():
-        varlist = []
-        title = title[0]
+    f_list = getSelections()
+    text = ""
 
+    for titlevar in varlist:
+        if titlevar.get() == "0":
+            count += 1
+            continue
+
+        elif titlevar.get() == "1":
+            text += str(f_list[count]) + "\n"
+            count += 1
+
+    f = open("EnabledSelections.txt", "w+")
+    f.write(text)
+    f.close
+
+
+# A window that will display the title of all the different selections previously created by the user
+# Hitting the submit button will save and go back a page
+# Creates a stringvar and appends that to a list in a loop which will go to addEnabledSelection() 
+def checkBoxes():
+    Clear()
+    root.geometry("300x500")
+    count = 0
+    varlist = []
+    for title in getSelections():
+        # Iterates through lists in the Selections.txt
+        title = title[0]
         titlevar = title + str(count)
-        print("Label: " + title)
-        print("Tvar: " + titlevar)
-        titlevar = StringVar()
-        tilevar = Checkbutton(root, text=title,variable=titlevar,onvalue=1)
-        tilevar.pack()
-        varlist.append(tilevar)
+        titlevar = StringVar(value=0)
+        Checkbutton(root, text=title,variable=titlevar, onvalue="1", offvalue="0").pack(fill="x")
+        varlist.append(titlevar)
         count += 1
-    Button(root, text="submit", command=lambda:getSelection(varlist)).pack()
+    Button(root, text="submit", command=lambda:addEnabledSelection(varlist)).pack()
 
 checkBoxes()
 
