@@ -2,7 +2,10 @@ from urllib import request
 from datetime import datetime
 from tkinter import *
 from tkinter import messagebox
+from tkinter import scrolledtext
+import subprocess
 import requests
+import threading
 import os
 import time
 import sys
@@ -15,7 +18,7 @@ destination = "Desktop"
 
 root = Tk()
 root.title("4Chan-App")
-root.geometry("400x400")
+root.geometry()
 root.configure(bg="#353839")
 
 
@@ -26,10 +29,11 @@ def Clear():
 def mainmenuControls(menuState):
     if menuState == "start" and selectionsExist():
         mainMenu("started")
-        print("Starting Search")
-        print(getSelections(), "here")
-        for selections in getSelections():
-            imageSaver(selections)
+        root.update_idletasks()
+        thread = threading.Thread(target=subprocess.run("run.bat", shell=True))
+        thread.start()
+        mainMenu()
+        
 
     elif menuState == "started":
         imageSaverStop()
@@ -37,18 +41,22 @@ def mainmenuControls(menuState):
 
 # Will determine what the main menu is supposed to look like
 def mainmenuInit(menuState):
-    if menuState == "start":
-        return {"color": "green", "state": "normal", "text": "Start", "menuState": "started"}
+    if not os.path.exists("Selections.txt"):
+        return  {"color": "light gray", "state": "disabled", "text": "Start", "menuState": "started", "command":"setup"}
+    elif menuState == "start":
+        return {"color": "green", "state": "normal", "text": "Start", "menuState": "started", "command":"default"}
     elif menuState == "started":
-        return {"color": "red", "state": "disabled", "text": "Stop", "menuState": "start"}
+        return {"color": "red", "state": "normal", "text": "Stop", "menuState": "start", "command":"default"}
+    else:
+        return {"color": "red", "state": "normal", "text": "Stop", "menuState": "start", "command":"default"}
 
 
 def mainMenu(menuState="start"):
     Clear()
     settings = mainmenuInit(menuState)
-    Button(root, text=settings["text"], bg=settings["color"],command=lambda:mainmenuControls(menuState)).pack(fill="x", pady=2)
-    Button(root, text="Presets", command=lambda:addQueryMenu()).pack(fill="x", pady=2)
-    Button(root, text="Console").pack(fill="x", pady=2)
+    Button(root, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(menuState), state=settings["state"]).pack(fill="x", pady=2)
+    Button(root, text="Presets", command=lambda:addQueryMenu(settings["command"])).pack(fill="x", pady=2)
+    Button(root, text="Console", command=consoleMenu).pack(fill="x", pady=2)
     Button(root, text="Settings").pack(fill="x", pady=2)
     Button(root, text="Exit", bg="red", command=lambda:root.destroy()).pack(fill="x", pady=2)
 
@@ -71,6 +79,7 @@ def addEnabledSelection(varlist):
     f = open("EnabledSelections.txt", "w+")
     f.write(text)
     f.close
+    mainMenu()
 
 
 # A window that will display the title of all the different selections previously created by the user
@@ -78,6 +87,7 @@ def addEnabledSelection(varlist):
 # Creates a stringvar and appends that to a list in a loop which will go to addEnabledSelection() 
 def checkBoxes():
     Clear()
+    global varlist
     root.geometry()
     newFrame = Frame(root)
     count = 0
@@ -90,7 +100,6 @@ def checkBoxes():
         Checkbutton(newFrame, text=title,variable=titlevar, onvalue="1", offvalue="0").pack(anchor="w")
         varlist.append(titlevar)
         count += 1
-    Button(newFrame, text="submit", command=lambda:addEnabledSelection(varlist)).pack(anchor="s", fill="x")
     newFrame.grid(column=0, row=0, sticky="nesw")
 
 
@@ -101,17 +110,24 @@ def addSearchIndex(title, board, whitelist, blacklist, command="none"):
         whitelist = [s.strip() + ',' for s in whitelist.get().split(',') if s.strip()]
         blacklist = [s.strip() + ',' for s in blacklist.get().split(',') if s.strip()]
 
+        if board == "":
+            messagebox.showinfo(title="Bruh", message="Please enter a valid board.")
+            addQueryMenu()
+            return
+
     selections = [title, board, [item for item in whitelist], [item for item in blacklist]]
     f = open("Selections.txt", "a+")
     f.write(str(selections) + "\n" )
     f.close
     addQueryMenu()
 
-def addQueryMenu():
+def addQueryMenu(command="default"):
     Clear()
-    checkBoxes()
-    queryFrame = Frame(root)
+    if command == "default":
+        checkBoxes()
+    print(root.grid_size())
 
+    queryFrame = Frame(root)
 
     title = StringVar()
     board = StringVar()
@@ -133,10 +149,30 @@ def addQueryMenu():
     e3.grid(column=1, row=2, pady=2)
     e4.grid(column=1, row=3, pady=2)
 
-    Button(queryFrame, text="Submit", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(column=1, row=4, pady=2, padx=2)
-    Button(queryFrame, text="Back", command=lambda:mainMenu()).grid(column=0, row=4, pady=2, padx=2)
+    Button(queryFrame, text="Submit", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(sticky="s", columnspan=queryFrame.grid_size()[0])
     queryFrame.grid(column=1, row=0, sticky="ew")
+    Button(root, text="Back", command=lambda:addEnabledSelection(varlist)).grid(sticky="s", columnspan=root.grid_size()[0])
     root.geometry()
+
+
+def consoleMenu():
+    Clear()
+    menuFrame = Frame(root)
+    Button(menuFrame, text="Back", command=mainMenu).pack()
+    menuFrame.pack(fill="x", side="top")
+
+    print(root.winfo_screenwidth(), root.winfo_height())
+    a = scrolledtext.ScrolledText(root, height=50, width=160, font="Consolas 15", foreground="#00FF00", background="#353839")
+    f = open("console.txt", "r")
+
+    for line in f.readlines():
+        a.insert(INSERT, str(line))
+
+    a.pack(side="bottom")
+    a.configure(state="disabled")
+    f.close()
+    print(root.winfo_width(), root.winfo_height())
+
 
 
 def imageSaver(selections, destination=destination):
@@ -250,7 +286,7 @@ def selectionsExist():
 
 
 # Returns a list of all lines in Selections.txt
-def getSelections():
+def getSelections(command="default"):
     try:
         f = open("Selections.txt", "r+")
         ls = []
