@@ -6,37 +6,45 @@ from tkinter import scrolledtext
 import subprocess
 import requests
 import threading
+import psutil
 import os
 import time
 import sys
 import ast
 import ssl
 
+global menuState
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 destination = "Desktop"
 
 root = Tk()
+config = {"width":53, "height":4, "font":"Consolas 21 bold"}
 root.title("4Chan-App")
 root.geometry()
 root.configure(bg="#353839")
 
 
+# Clears the window
 def Clear():
     for widget in root.winfo_children():
         widget.destroy()
 
+
+# Once the Start/Stop button is pushed it will either start or stop downloading depending on if the process is running or not
 def mainmenuControls(menuState):
     if menuState == "start" and selectionsExist():
+        f = open("EnabledSelections.txt", "r+")
+        if f.readline == "":
+            messagebox.showinfo(title="Bruh", message="Please check off a filter you want to apply before continuing.")
+            addQueryMenu()
+        startorstopDownload("start")
         mainMenu("started")
-        root.update_idletasks()
-        thread = threading.Thread(target=subprocess.run("run.bat", shell=True))
-        thread.start()
-        mainMenu()
-        
 
     elif menuState == "started":
-        imageSaverStop()
+        startorstopDownload("stop")
+        mainMenu("start")
 
 
 # Will determine what the main menu is supposed to look like
@@ -51,14 +59,28 @@ def mainmenuInit(menuState):
         return {"color": "red", "state": "normal", "text": "Stop", "menuState": "start", "command":"default"}
 
 
+# Makes sure the download process has stopped and closes the program
+def Exit():
+    if getMenuState() == "started":
+        startorstopDownload("stop")
+    root.destroy()
+    
+
+# The main menu. Will configure it's button's settings with the function mainmenuInit which returns a dictionary of settings
+# First button will change to either start or stop depending on if the download process is running or not
+# Second will take the user to the adding selection menu
+# Third will open the console that the download process produced for the user to read
+# Fourth will open settings
+# Fifth will close the app and stop the download process
 def mainMenu(menuState="start"):
     Clear()
     settings = mainmenuInit(menuState)
-    Button(root, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(menuState), state=settings["state"]).pack(fill="x", pady=2)
-    Button(root, text="Presets", command=lambda:addQueryMenu(settings["command"])).pack(fill="x", pady=2)
-    Button(root, text="Console", command=consoleMenu).pack(fill="x", pady=2)
-    Button(root, text="Settings").pack(fill="x", pady=2)
-    Button(root, text="Exit", bg="red", command=lambda:root.destroy()).pack(fill="x", pady=2)
+    Button(root, **config, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(menuState), state=settings["state"]).pack(fill="x", pady=2)
+    Button(root, **config, text="Presets", bg="dark gray", command=lambda:addQueryMenu(settings["command"])).pack(fill="x", pady=2)
+    Button(root, **config, text="Console", bg="dark gray", command=consoleMenu).pack(fill="x", pady=2)
+    Button(root, **config, text="Settings", bg="dark gray").pack(fill="x", pady=2)
+    Button(root, **config, text="Exit", bg="red", command=lambda:Exit()).pack(fill="x", pady=2)
+    root.geometry()
 
 # When a list of stringvars is passed in it will get the correlating values using .get()
 # If a checkmark is detected it will write it to a file called EnabledSelections.txt
@@ -79,17 +101,17 @@ def addEnabledSelection(varlist):
     f = open("EnabledSelections.txt", "w+")
     f.write(text)
     f.close
-    mainMenu()
+    mainMenu(getMenuState())
 
 
 # A window that will display the title of all the different selections previously created by the user
-# Hitting the submit button will save and go back a page
+# Pressing the back button will save and go back a page
 # Creates a stringvar and appends that to a list in a loop which will go to addEnabledSelection() 
 def checkBoxes():
     Clear()
     global varlist
     root.geometry()
-    newFrame = Frame(root)
+    newFrame = Frame(root, bg="#353839")
     count = 0
     varlist = []
     for title in getSelections():
@@ -97,12 +119,13 @@ def checkBoxes():
         title = title[0]
         titlevar = title + str(count)
         titlevar = StringVar(value=0)
-        Checkbutton(newFrame, text=title,variable=titlevar, onvalue="1", offvalue="0").pack(anchor="w")
+        Checkbutton(newFrame, **config, text=title, variable=titlevar, onvalue="1", offvalue="0", bg="dark gray", compound="top", relief="raised").pack(anchor="w", pady=2, padx=2)
         varlist.append(titlevar)
         count += 1
     newFrame.grid(column=0, row=0, sticky="nesw")
 
 
+# Retrieves the fields information and converts it into a list, then it's saved to Selections.txt
 def addSearchIndex(title, board, whitelist, blacklist, command="none"):
     if command == "none":
         title = title.get()
@@ -110,9 +133,10 @@ def addSearchIndex(title, board, whitelist, blacklist, command="none"):
         whitelist = [s.strip() + ',' for s in whitelist.get().split(',') if s.strip()]
         blacklist = [s.strip() + ',' for s in blacklist.get().split(',') if s.strip()]
 
+        # Doesn't let you proceed if you forgot to add a board
         if board == "":
             messagebox.showinfo(title="Bruh", message="Please enter a valid board.")
-            addQueryMenu()
+            addQueryMenu(command="setup")
             return
 
     selections = [title, board, [item for item in whitelist], [item for item in blacklist]]
@@ -121,49 +145,62 @@ def addSearchIndex(title, board, whitelist, blacklist, command="none"):
     f.close
     addQueryMenu()
 
+
+# The menu that contains the checkbox and query frame.
 def addQueryMenu(command="default"):
     Clear()
+    menuState = getMenuState()
     if command == "default":
         checkBoxes()
     print(root.grid_size())
 
-    queryFrame = Frame(root)
+    queryFrame = Frame(root, bg="dark gray")
 
     title = StringVar()
     board = StringVar()
     whitelist = StringVar()
     blacklist = StringVar()
 
-    Label(queryFrame, text="Title:").grid(column=0, row=0, pady=2)
-    Label(queryFrame, text="Board:").grid(column=0, row=1, pady=2)
-    Label(queryFrame, text="Whitelist:").grid(column=0, row=2, pady=2)
-    Label(queryFrame, text="Blacklist:").grid(column=0, row=3, pady=2)
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Title:").grid(column=0, row=0, pady=2)
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Board:").grid(column=0, row=1, pady=2)
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Whitelist:").grid(column=0, row=2, pady=2)
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Blacklist:").grid(column=0, row=3, pady=2)
 
-    e1 = Entry(queryFrame)
-    e2 = Entry(queryFrame)
-    e3 = Entry(queryFrame)
-    e4 = Entry(queryFrame)
+    e1 = Entry(queryFrame, font="Consolas 21 bold",)
+    e2 = Entry(queryFrame, font="Consolas 21 bold",)
+    e3 = Entry(queryFrame, font="Consolas 21 bold",)
+    e4 = Entry(queryFrame, font="Consolas 21 bold",)
 
     e1.grid(column=1, row=0, pady=2)
     e2.grid(column=1, row=1, pady=2)
     e3.grid(column=1, row=2, pady=2)
     e4.grid(column=1, row=3, pady=2)
 
-    Button(queryFrame, text="Submit", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(sticky="s", columnspan=queryFrame.grid_size()[0])
+    Button(root, **config, bg="green", text="Save", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(sticky="e", row=1, column=1)
     queryFrame.grid(column=1, row=0, sticky="ew")
-    Button(root, text="Back", command=lambda:addEnabledSelection(varlist)).grid(sticky="s", columnspan=root.grid_size()[0])
+
+    # Will go to back to main menu if the user hasn't made a filter yet
+    if command == "setup":
+        Button(root, **config, bg="red", text="Back", command=lambda:mainMenu(menuState)).grid(sticky="w", row=1, column=0)
+    # Otherwise this will create a back button that will save the input to Selections.txt and return to main menu
+    else:
+        Button(root, **config, bg="red", text="Back", command=lambda:addEnabledSelection(varlist)).grid(sticky="w", row=1, column=0)
     root.geometry()
 
 
+# A menu that will display what the console has been outputting, time, file, match, board, etc.
 def consoleMenu():
     Clear()
-    menuFrame = Frame(root)
-    Button(menuFrame, text="Back", command=mainMenu).pack()
+    menuFrame = Frame(root, bg="#353839")
+    Button(menuFrame, **config, text="Back", bg="red", command=mainMenu).pack()
     menuFrame.pack(fill="x", side="top")
 
     print(root.winfo_screenwidth(), root.winfo_height())
-    a = scrolledtext.ScrolledText(root, height=50, width=160, font="Consolas 15", foreground="#00FF00", background="#353839")
-    f = open("console.txt", "r")
+    a = scrolledtext.ScrolledText(root, height=50, width=160, font="Consolas 15", background="dark gray")
+    try:
+        f = open("console.txt", "r")
+    except :
+        f = open("console.txt", "w+")
 
     for line in f.readlines():
         a.insert(INSERT, str(line))
@@ -171,112 +208,44 @@ def consoleMenu():
     a.pack(side="bottom")
     a.configure(state="disabled")
     f.close()
-    print(root.winfo_width(), root.winfo_height())
+    root.geometry()
 
 
-
-def imageSaver(selections, destination=destination):
-    print("95", selections, len(selections), type(selections))
-    count = 0
-    json = requests.get("https://a.4cdn.org/" + selections[1] + "/catalog.json").json()
-
-    # Sorts by the threads in each page
-    for page in range(len(json) - 1):
-
-        # Sorts through individual threads within a page
-        for thread in range(len(json[1]["threads"]) - 1):
-            downloading = True
-
-            # Gets the title from the metadata found within the thread's .json
-            try:
-                title = titleCleanup(str(json[page]["threads"][thread]["com"]).lower() + str(json[page]["threads"][thread]["sub"]).lower())
-            except:
-                try:
-                    title = titleCleanup(str(json[page]["threads"][thread]["com"]).lower())
-                except:
-                    continue
-
-            # Blacklist filter
-            for word in selections[3]:
-                if word in title:
-                    continue
-
-            # Searches through threads when given the keyword of the preset
-            for word in selections[2]:
-
-                # Will go into this block if the comment of a post matches one of the keywords
-                if word in title:
-                    # Gets the .json of the thread
-                    c = requests.get("https://a.4cdn.org/" + selections[1] + "/thread/" + str(json[page]["threads"][thread]["no"]) + ".json").json()
-
-                    # Looks through the .json of the individual comment using the range of however many comments are within the thread
-                    for comment in range(len(c["posts"]) - 1):
-
-                        # Sometimes there are no images on a comment hence the try, except
-                        try:
-                            link = "https://is2.4chan.org/" + selections[1] + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]
-                        except:
-                            continue
-
-                        # If there is no path with the same board and preset name it makes one and starts downloading the images there
-                        if not os.path.exists(destination + "/" + selections[1] + "/" + selections[0].capitalize()):
-                            os.makedirs(destination + "/" + selections[1] + "/" + selections[0].capitalize())
-
-                        # If the same file exists it continues to avoid downloading again
-                        if os.path.exists(destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]):
-                            continue
-
-                        request.urlretrieve(link, destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
-                        count += 1
-
-                        if downloading:
-                            print("--------------------------------------------------------------------------------------------")
-                            print(datetime.now().strftime(
-                                "%H:%M") + " | Link: https://boards.4chan.org/" + selections[1] + "/thread/" + str(
-                                json[page]["threads"][thread]["no"]))
-                            print(datetime.now().strftime("%H:%M") + " | Thread: " + title + " | /" + selections[1] + "/")
-                            print(datetime.now().strftime("%H:%M") + " | Match: " + word)
-
-                        print(datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
-                        downloading = False
-                        #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
+# Opens an external .pyw file that downloads images to a directory and saves the output to a file
+# Provide a command and the function will carry that out. But if in the wrong order will fail
+def startorstopDownload(command):
+    global proc
+    if command == "start":
+        proc = subprocess.Popen("console.pyw", shell=True)
+    if command == "stop":
+        process = psutil.Process(proc.pid)
+        for proc in process.children(recursive=True):
+            proc.kill()
+        process.kill()
 
 
-def imageSaverStop():
-    exit()
-
-def titleCleanup(text):
-    tag = False
-    a = ""
-    apostrophe = "&#039;"
-    for letter in text:
-            if letter == "<":
-                tag = True
-            elif letter == ">":
-                tag = False
-            elif tag:
-                continue
-            else:
-                a += letter
-    if apostrophe in a:
-        a = a.replace(apostrophe, "'")
-        return a
-    return a
-
-# Simple animation
-def animate(seconds):
-    for i in range(seconds // 4):
-        sys.stdout.write('\rSearching')
-        time.sleep(1)
-        sys.stdout.write('\rSearching .')
-        time.sleep(1)
-        sys.stdout.write('\rSearching . .')
-        time.sleep(1)
-        sys.stdout.write('\rSearching . . .')
-        time.sleep(1)
-    sys.stdout.write('\r')
+# Will check if the downloading process is running
+def checkIfProcessRunning(processName):
+    #Iterate over the all the running process
+    for proc in psutil.process_iter():
+        try:
+            # Check if process name contains the given name string.
+            if processName.lower() in proc.name().lower():
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False;
 
 
+# Will return true if the download process is running and false if not
+def getMenuState():
+    if checkIfProcessRunning("pythonw.exe"):
+        return "started"
+    else:
+        return "start"
+
+
+# Returns true if there are selection within the file Selections.txt and false if none are found
 def selectionsExist():
     selections = getSelections()
     if selections != None:
@@ -311,11 +280,5 @@ def getSelections(command="default"):
         return ls
 
 
-#imageSaver(custom, "4Chan")
-
 mainMenu()
 root.mainloop()
-
-# Image Saver Works
-# getSelections needs to get rid of commas - Done
-# 

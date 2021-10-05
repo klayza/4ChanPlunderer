@@ -6,16 +6,20 @@ import os
 import time
 import sys
 import ssl
+import ast
 
-ssl._create_default_https_context = ssl._create_unverified_context
 # Console based version
+# Saves output to .txt and will display in the console section 
+# Normal version of the .pyw file
 
-destination = "E:/Media/4Chan"
+destination = "Desktop"
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination=destination):
-    count = 0
+    ssl._create_default_https_context = ssl._create_unverified_context
     json = requests.get("https://a.4cdn.org/" + selections[1] + "/catalog.json").json()
+    count = 0
+
 
     # Sorts by the threads in each page
     for page in range(len(json) - 1):
@@ -65,19 +69,28 @@ def imageSaver(selections, destination=destination):
 
                         request.urlretrieve(link, destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
                         count += 1
-
+                        f = open("console.txt", "a+")
                         if downloading:
+                            
                             print("--------------------------------------------------------------------------------------------")
-                            print(datetime.now().strftime(
-                                "%H:%M") + " | Link: https://boards.4chan.org/" + selections[1] + "/thread/" + str(
-                                json[page]["threads"][thread]["no"]))
+                            f.write("\n--------------------------------------------------------------------------------------------")
+
+                            print(datetime.now().strftime("%H:%M") + " | Link: https://boards.4chan.org/" + selections[1] + "/thread/" + str(json[page]["threads"][thread]["no"]))
+                            f.write("\n" + datetime.now().strftime("%H:%M") + " | Link: https://boards.4chan.org/" + selections[1] + "/thread/" + str(json[page]["threads"][thread]["no"]))
+
                             print(datetime.now().strftime("%H:%M") + " | Thread: " + title + " | /" + selections[1] + "/")
+                            f.write("\n" + datetime.now().strftime("%H:%M") + " | Thread: " + title + " | /" + selections[1] + "/")
+
                             print(datetime.now().strftime("%H:%M") + " | Match: " + word)
+                            f.write("\n" + datetime.now().strftime("%H:%M") + " | Match: " + word)
 
                         print(datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
+                        f.write("\n" + (datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count)))
+                        f.close()
                         downloading = False
                         #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
-
+    
+    
 
 def titleCleanup(text):
     tag = False
@@ -110,12 +123,37 @@ def animate(seconds):
         time.sleep(1)
     sys.stdout.write('\r')
 
+def getSelections():
+    try:
+        f = open("EnabledSelections.txt", "r+")
+    except:
+        f = open("Selections.txt", "r+")
+    else:
+        ls = []
+        for line in f.readlines():
+            temp = line.splitlines()
+            print("Temp:", temp)
+            w = str(temp)[2:-2]
+            print("1", w)
+            w = w.replace(",',", "',")
+            w = w.replace(",']", "']")
+            print("2", w)
+            w = ast.literal_eval(w)
+            ls.append(w)
+            print("3", w)
+            print("222", w, type(w))
+        f.close()
+        print("\n\n\n", ls, "\n\n\n")
+        return ls
+
 
 if __name__ == "__main__":
-    print("---------[Starting Search]---------")
+    print("Starting Search")
     while True:
         # [Title, Board, [Whitelists], [Blacklists]]
-        imageSaver(["My Filter", "wg", ["nature", "forest"], ["industrial", "city"]])
+        for selection in getSelections():
+            print(selection)
+            imageSaver(selection)
         animate(360)
 
 

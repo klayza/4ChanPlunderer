@@ -11,7 +11,7 @@ import ast
 # Console based version
 # Saves output to .txt and will display in the console section 
 
-destination = "E:/Media/4Chan"
+destination = "Desktop"
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination=destination):
