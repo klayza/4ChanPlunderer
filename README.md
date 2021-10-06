@@ -1,4 +1,5 @@
-# GUI for saving images locally from 4chan given a whitelist, blacklist, and board
+# 4ChanPlunderer
+GUI for saving images locally from 4chan given a whitelist, blacklist, and board
 
 # To-Do
 (In order of importance)
