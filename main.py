@@ -1,17 +1,11 @@
-from urllib import request
-from datetime import datetime
+from tkinter import messagebox, scrolledtext
+from PIL import ImageTk, Image as Img1, ImageFilter
 from tkinter import *
-from tkinter import messagebox
-from tkinter import scrolledtext
 import subprocess
-import requests
-import threading
 import psutil
-import os
-import time
-import sys
 import ast
 import ssl
+import os
 
 global menuState
 
@@ -25,35 +19,62 @@ root.title("4Chan-App")
 root.geometry()
 root.configure(bg="#353839")
 
+class windowStats:
+    def __init__(self):
+        self.isrunning = False
+
+        if os.path.exists("Selections.txt"):
+            self.issetup = False 
+        else:
+            self.issetup = True
+
+        if os.path.exists("EnabledSelections.txt"):
+            with open("EnabledSelections.txt", "r+") as f:
+                if str(f.readline()) == "":
+                    self.missingenabledselections = True
+                else:
+                    self.missingenabledselections = False
+        else:
+            self.missingenabledselections = True
+            
+
+        
 
 # Clears the window
 def Clear():
     for widget in root.winfo_children():
         widget.destroy()
-
-
+     
+    
 # Once the Start/Stop button is pushed it will either start or stop downloading depending on if the process is running or not
-def mainmenuControls(menuState):
-    if menuState == "start" and selectionsExist():
+def mainmenuControls():
+    print("\n\n\n", window.isrunning, window.issetup, window.missingenabledselections)
+    if window.isrunning == False and window.issetup == False:
         f = open("EnabledSelections.txt", "r+")
         if f.readline == "":
             messagebox.showinfo(title="Bruh", message="Please check off a filter you want to apply before continuing.")
             addQueryMenu()
         startorstopDownload("start")
-        mainMenu("started")
+        window.isrunning = True
+        mainMenu()
 
-    elif menuState == "started":
+    elif window.isrunning:
         startorstopDownload("stop")
-        mainMenu("start")
+        window.isrunning = False
+        mainMenu()
+
+    else:
+        print(window.isrunning, window.issetup)
 
 
 # Will determine what the main menu is supposed to look like
-def mainmenuInit(menuState):
-    if not os.path.exists("Selections.txt"):
+def mainmenuInit():
+    print(window.issetup)
+    if window.issetup or window.missingenabledselections:
         return  {"color": "light gray", "state": "disabled", "text": "Start", "menuState": "started", "command":"setup"}
-    elif menuState == "start":
+    elif not window.isrunning:
         return {"color": "green", "state": "normal", "text": "Start", "menuState": "started", "command":"default"}
-    elif menuState == "started":
+    elif window.isrunning:
         return {"color": "red", "state": "normal", "text": "Stop", "menuState": "start", "command":"default"}
     else:
         return {"color": "red", "state": "normal", "text": "Stop", "menuState": "start", "command":"default"}
@@ -61,22 +82,51 @@ def mainmenuInit(menuState):
 
 # Makes sure the download process has stopped and closes the program
 def Exit():
-    if getMenuState() == "started":
+    if window.isrunning:
         startorstopDownload("stop")
     root.destroy()
-    
 
-# The main menu. Will configure it's button's settings with the function mainmenuInit which returns a dictionary of settings
-# First button will change to either start or stop depending on if the download process is running or not
-# Second will take the user to the adding selection menu
-# Third will open the console that the download process produced for the user to read
-# Fourth will open settings
-# Fifth will close the app and stop the download process
-def mainMenu(menuState="start"):
+def main():
+    # Define image
+    image = Img1.open("hopper.jpg")
+    bg = ImageTk.PhotoImage(image.resize((400, 250), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(8)))
+
+    # Create a canvas
+    my_canvas = Canvas(root, width=400, height=250, borderwidth=0, highlightthickness=0)
+    my_canvas.pack(fill="both", expand=True)
+
+    # Set image in canvas
+    my_canvas.create_image(0,0, image=bg, anchor="nw")
+
+    def resizer(e):
+    	global bg1, resized_bg, new_bg
+    	# Open our image
+    	bg1 = Img1.open("hopper.jpg")
+    	# Resize the image
+    	print(str(e.width), str(e.height))
+    	resized_bg = bg1.resize((e.width, e.height), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(8))
+    	# Define our image again
+    	new_bg = ImageTk.PhotoImage(resized_bg)
+    	# Add it back to the canvas
+    	my_canvas.create_image(0,0, image=new_bg, anchor="nw")
+
+    root.bind('<Configure>', resizer)
+    root.unbind("<configure>")
+'''
+The main menu. Will configure it's button's settings with the function mainmenuInit which returns a dictionary of settings
+First button will change to either start or stop depending on if the download process is running or not
+Second will take the user to the adding selection menu
+Third will open the console that the download process produced for the user to read
+Fourth will open settings
+Fifth will close the app and stop the download process
+'''
+
+def mainMenu():
     Clear()
-    settings = mainmenuInit(menuState)
-    Button(root, **config, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(menuState), state=settings["state"]).pack(fill="x", pady=2)
-    Button(root, **config, text="Presets", bg="dark gray", command=lambda:addQueryMenu(settings["command"])).pack(fill="x", pady=2)
+    main()
+    settings = mainmenuInit()
+    Button(root, **config, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(), state=settings["state"]).pack(fill="x", pady=2)
+    Button(root, **config, text="Presets", bg="dark gray", command=lambda:addQueryMenu()).pack(fill="x", pady=2)
     Button(root, **config, text="Console", bg="dark gray", command=consoleMenu).pack(fill="x", pady=2)
     Button(root, **config, text="Settings", bg="dark gray").pack(fill="x", pady=2)
     Button(root, **config, text="Exit", bg="red", command=lambda:Exit()).pack(fill="x", pady=2)
@@ -101,7 +151,7 @@ def addEnabledSelection(varlist):
     f = open("EnabledSelections.txt", "w+")
     f.write(text)
     f.close
-    mainMenu(getMenuState())
+    mainMenu()
 
 
 # A window that will display the title of all the different selections previously created by the user
@@ -119,10 +169,17 @@ def checkBoxes():
         title = title[0]
         titlevar = title + str(count)
         titlevar = StringVar(value=0)
-        Checkbutton(newFrame, **config, text=title, variable=titlevar, onvalue="1", offvalue="0", bg="dark gray", compound="top", relief="raised").pack(anchor="w", pady=2, padx=2)
+
+        c = Checkbutton(newFrame, **config, text=title, variable=titlevar, onvalue="1", offvalue="0", bg="dark gray", compound="top", relief="raised")
+
+        # Checks box off if it is already selected
+        if title in str(getSelections("EnabledSelections.txt")):
+            c.select()
+        c.pack(anchor="w", pady=2, padx=2)
+
         varlist.append(titlevar)
         count += 1
-    newFrame.grid(column=0, row=0, sticky="nesw")
+    newFrame.grid(row=2, column=0)
 
 
 # Retrieves the fields information and converts it into a list, then it's saved to Selections.txt
@@ -136,9 +193,13 @@ def addSearchIndex(title, board, whitelist, blacklist, command="none"):
         # Doesn't let you proceed if you forgot to add a board
         if board == "":
             messagebox.showinfo(title="Bruh", message="Please enter a valid board.")
-            addQueryMenu(command="setup")
+            if window.issetup:
+                addQueryMenu(command="setup")
+            else:
+                addQueryMenu()
             return
 
+    window.issetup = False
     selections = [title, board, [item for item in whitelist], [item for item in blacklist]]
     f = open("Selections.txt", "a+")
     f.write(str(selections) + "\n" )
@@ -147,12 +208,10 @@ def addSearchIndex(title, board, whitelist, blacklist, command="none"):
 
 
 # The menu that contains the checkbox and query frame.
-def addQueryMenu(command="default"):
+def addQueryMenu():
     Clear()
-    menuState = getMenuState()
-    if command == "default":
+    if not window.issetup:
         checkBoxes()
-    print(root.grid_size())
 
     queryFrame = Frame(root, bg="dark gray")
 
@@ -161,30 +220,33 @@ def addQueryMenu(command="default"):
     whitelist = StringVar()
     blacklist = StringVar()
 
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Title:").grid(column=0, row=0, pady=2)
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Board:").grid(column=0, row=1, pady=2)
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Whitelist:").grid(column=0, row=2, pady=2)
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Blacklist:").grid(column=0, row=3, pady=2)
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Title:").grid(column=0, row=0, pady=2, padx=2, sticky="w")
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Board:").grid(column=0, row=1, pady=2, padx=2, sticky="w")
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Whitelist:").grid(column=0, row=2, pady=2, padx=2, sticky="w")
+    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Blacklist:").grid(column=0, row=3, pady=2, padx=2, sticky="w")
 
-    e1 = Entry(queryFrame, font="Consolas 21 bold",)
-    e2 = Entry(queryFrame, font="Consolas 21 bold",)
-    e3 = Entry(queryFrame, font="Consolas 21 bold",)
-    e4 = Entry(queryFrame, font="Consolas 21 bold",)
+    e1 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
+    e2 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
+    e3 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
+    e4 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
 
     e1.grid(column=1, row=0, pady=2)
     e2.grid(column=1, row=1, pady=2)
     e3.grid(column=1, row=2, pady=2)
     e4.grid(column=1, row=3, pady=2)
 
-    Button(root, **config, bg="green", text="Save", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(sticky="e", row=1, column=1)
-    queryFrame.grid(column=1, row=0, sticky="ew")
+    Button(root, **config, bg="green", text="Save", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(row=1, column=0)
+    queryFrame.grid(column=0, row=0, sticky="n")
 
     # Will go to back to main menu if the user hasn't made a filter yet
-    if command == "setup":
-        Button(root, **config, bg="red", text="Back", command=lambda:mainMenu(menuState)).grid(sticky="w", row=1, column=0)
+    if window.issetup:
+        Button(root, **config, bg="red", text="Back", command=lambda:mainMenu()).grid(row=3, column=0)
     # Otherwise this will create a back button that will save the input to Selections.txt and return to main menu
     else:
-        Button(root, **config, bg="red", text="Back", command=lambda:addEnabledSelection(varlist)).grid(sticky="w", row=1, column=0)
+        if varlist == None:
+            mainMenu()
+        else:
+            Button(root, **config, bg="red", text="Back", command=lambda:addEnabledSelection(varlist)).grid(row=3, column=0)
     root.geometry()
 
 
@@ -192,10 +254,9 @@ def addQueryMenu(command="default"):
 def consoleMenu():
     Clear()
     menuFrame = Frame(root, bg="#353839")
-    Button(menuFrame, **config, text="Back", bg="red", command=mainMenu).pack()
+    Button(menuFrame, **config, text="Back", bg="red", command=lambda:mainMenu()).pack()
     menuFrame.pack(fill="x", side="top")
 
-    print(root.winfo_screenwidth(), root.winfo_height())
     a = scrolledtext.ScrolledText(root, height=50, width=160, font="Consolas 15", background="dark gray")
     try:
         f = open("console.txt", "r")
@@ -255,30 +316,25 @@ def selectionsExist():
 
 
 # Returns a list of all lines in Selections.txt
-def getSelections(command="default"):
+def getSelections(search="Selections.txt"):
     try:
-        f = open("Selections.txt", "r+")
+        f = open(search, "r+")
         ls = []
     except:
         messagebox.showinfo(title="Warning", message="Before proceeding please enter a search query")
-        mainMenu("start")
+        mainMenu()
     else:
         for line in f.readlines():
             temp = line.splitlines()
-            print("Temp:", temp)
             w = str(temp)[2:-2]
-            print("1", w)
             w = w.replace(",',", "',")
             w = w.replace(",']", "']")
-            print("2", w)
             w = ast.literal_eval(w)
             ls.append(w)
-            print("3", w)
-            print("222", w, type(w))
         f.close()
-        print("\n\n\n", ls, "\n\n\n")
         return ls
 
-
+window = windowStats()
+window.__init__()
 mainMenu()
 root.mainloop()
