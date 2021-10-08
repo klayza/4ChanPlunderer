@@ -69,7 +69,7 @@ def mainmenuControls():
 
 # Will determine what the main menu is supposed to look like
 def mainmenuInit():
-    print(window.issetup)
+    print(window.issetup, window.missingenabledselections)
     if window.issetup or window.missingenabledselections:
         return  {"color": "light gray", "state": "disabled", "text": "Start", "menuState": "started", "command":"setup"}
     elif not window.isrunning:

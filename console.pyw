@@ -11,7 +11,7 @@ import ast
 # Console based version
 # Saves output to .txt and will display in the console section 
 
-destination = "Desktop"
+destination = "E:/Media/4Chan"
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination=destination):
@@ -146,14 +146,18 @@ def getSelections():
         return ls
 
 
-if __name__ == "__main__":
-    print("Starting Search")
-    while True:
-        # [Title, Board, [Whitelists], [Blacklists]]
-        for selection in getSelections():
-            print(selection)
-            imageSaver(selection)
-        animate(360)
+
+seconds = 360
+while True:
+    # [Title, Board, [Whitelists], [Blacklists]]
+    for selection in getSelections():
+        print(selection)
+        imageSaver(selection)
+
+    with open("console.txt") as f:
+            f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(seconds)))   
+            f.close() 
+    animate(seconds)
 
 
 
