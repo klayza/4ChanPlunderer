@@ -131,18 +131,12 @@ def getSelections():
         ls = []
         for line in f.readlines():
             temp = line.splitlines()
-            print("Temp:", temp)
             w = str(temp)[2:-2]
-            print("1", w)
             w = w.replace(",',", "',")
             w = w.replace(",']", "']")
-            print("2", w)
             w = ast.literal_eval(w)
             ls.append(w)
-            print("3", w)
-            print("222", w, type(w))
         f.close()
-        print("\n\n\n", ls, "\n\n\n")
         return ls
 
 
@@ -151,13 +145,9 @@ seconds = 360
 while True:
     # [Title, Board, [Whitelists], [Blacklists]]
     for selection in getSelections():
-        print(selection)
         imageSaver(selection)
 
-    with open("console.txt") as f:
+    with open("console.txt", "a+") as f:
             f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(seconds)))   
             f.close() 
     animate(seconds)
-
-
-
