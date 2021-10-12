@@ -277,7 +277,7 @@ def consoleMenu():
 def startorstopDownload(command):
     global proc
     if command == "start":
-        proc = subprocess.Popen("console.pyw", shell=True)
+        proc = subprocess.Popen("console.py", shell=True)
     if command == "stop":
         process = psutil.Process(proc.pid)
         for proc in process.children(recursive=True):

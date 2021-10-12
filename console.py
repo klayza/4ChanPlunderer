@@ -10,9 +10,8 @@ import ast
 
 # Console based version
 # Saves output to .txt and will display in the console section 
-# Normal version of the .pyw file
 
-destination = "Desktop"
+destination = "E:/Media/4Chan"
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination=destination):
@@ -132,29 +131,23 @@ def getSelections():
         ls = []
         for line in f.readlines():
             temp = line.splitlines()
-            print("Temp:", temp)
             w = str(temp)[2:-2]
-            print("1", w)
             w = w.replace(",',", "',")
             w = w.replace(",']", "']")
-            print("2", w)
             w = ast.literal_eval(w)
             ls.append(w)
-            print("3", w)
-            print("222", w, type(w))
         f.close()
-        print("\n\n\n", ls, "\n\n\n")
         return ls
 
 
-if __name__ == "__main__":
-    print("Starting Search")
-    while True:
-        # [Title, Board, [Whitelists], [Blacklists]]
-        for selection in getSelections():
-            print(selection)
-            imageSaver(selection)
-        animate(360)
 
+seconds = 360
+while True:
+    # [Title, Board, [Whitelists], [Blacklists]]
+    for selection in getSelections():
+        imageSaver(selection)
 
-
+    with open("console.txt", "a+") as f:
+            f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(seconds)))   
+            f.close() 
+    animate(seconds)
