@@ -12,12 +12,15 @@ global menuState
 ssl._create_default_https_context = ssl._create_unverified_context
 
 destination = "Desktop"
+w, h = 400, 600
 
 root = Tk()
-config = {"width":53, "height":4, "font":"Consolas 21 bold"}
+
+config = {"width":53, "height":2, "font":"Consolas 21 bold"}
 root.title("4Chan-App")
-root.geometry()
+#root.geometry(f"{str(w)}x{str(h)}")
 root.configure(bg="#353839")
+root.state('zoomed')
 
 class windowStats:
     def __init__(self):
@@ -87,16 +90,21 @@ def Exit():
     root.destroy()
 
 def main():
-    # Define image
-    image = Img1.open("hopper.jpg")
-    bg = ImageTk.PhotoImage(image.resize((400, 250), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(8)))
+    global bg, my_canvas
 
     # Create a canvas
-    my_canvas = Canvas(root, width=400, height=250, borderwidth=0, highlightthickness=0)
-    my_canvas.pack(fill="both", expand=True)
+    my_canvas = Canvas(root, bg="#353839", borderwidth=0, highlightthickness=0)
+    my_canvas.pack(fill="both", expand=True, anchor="n")
+
+    # Define image
+    image = Img1.open("hopper.jpg")
+    root.update()
+    print(my_canvas.winfo_width(), my_canvas.winfo_height())
+    bg = ImageTk.PhotoImage(image.resize((my_canvas.winfo_width(), my_canvas.winfo_height()), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(2)))
 
     # Set image in canvas
     my_canvas.create_image(0,0, image=bg, anchor="nw")
+    
 
     def resizer(e):
     	global bg1, resized_bg, new_bg
@@ -104,14 +112,18 @@ def main():
     	bg1 = Img1.open("hopper.jpg")
     	# Resize the image
     	print(str(e.width), str(e.height))
-    	resized_bg = bg1.resize((e.width, e.height), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(8))
+    	resized_bg = bg1.resize((e.width, e.height), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(50))
     	# Define our image again
     	new_bg = ImageTk.PhotoImage(resized_bg)
     	# Add it back to the canvas
     	my_canvas.create_image(0,0, image=new_bg, anchor="nw")
 
-    root.bind('<Configure>', resizer)
-    root.unbind("<configure>")
+    #root.bind('<Configure>', resizer)
+    
+def ImageViewTab():
+    Clear()
+
+
 '''
 The main menu. Will configure it's button's settings with the function mainmenuInit which returns a dictionary of settings
 First button will change to either start or stop depending on if the download process is running or not
@@ -123,9 +135,10 @@ Fifth will close the app and stop the download process
 
 def mainMenu():
     Clear()
-    main()
     settings = mainmenuInit()
+    main()
     Button(root, **config, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(), state=settings["state"]).pack(fill="x", pady=2)
+    Button(root, **config, text="Library", bg="dark gray", command=lambda:ImageViewTab()).pack(fill="x", pady=2)
     Button(root, **config, text="Presets", bg="dark gray", command=lambda:addQueryMenu()).pack(fill="x", pady=2)
     Button(root, **config, text="Console", bg="dark gray", command=consoleMenu).pack(fill="x", pady=2)
     Button(root, **config, text="Settings", bg="dark gray").pack(fill="x", pady=2)
@@ -241,13 +254,15 @@ def addQueryMenu():
     # Will go to back to main menu if the user hasn't made a filter yet
     if window.issetup:
         Button(root, **config, bg="red", text="Back", command=lambda:mainMenu()).grid(row=3, column=0)
+        root.geometry()
     # Otherwise this will create a back button that will save the input to Selections.txt and return to main menu
     else:
         if varlist == None:
             mainMenu()
         else:
             Button(root, **config, bg="red", text="Back", command=lambda:addEnabledSelection(varlist)).grid(row=3, column=0)
-    root.geometry()
+            root.geometry()
+    
 
 
 # A menu that will display what the console has been outputting, time, file, match, board, etc.
