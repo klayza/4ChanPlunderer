@@ -72,7 +72,6 @@ def mainmenuControls():
 
 # Will determine what the main menu is supposed to look like
 def mainmenuInit():
-    print(window.issetup, window.missingenabledselections)
     if window.issetup or window.missingenabledselections:
         return  {"color": "light gray", "state": "disabled", "text": "Start", "menuState": "started", "command":"setup"}
     elif not window.isrunning:
@@ -89,6 +88,8 @@ def Exit():
         startorstopDownload("stop")
     root.destroy()
 
+
+# Adds a canvas image to main menu screen
 def main():
     global bg, my_canvas
 
@@ -108,21 +109,61 @@ def main():
 
     def resizer(e):
     	global bg1, resized_bg, new_bg
-    	# Open our image
+    	# Open image
     	bg1 = Img1.open("hopper.jpg")
     	# Resize the image
     	print(str(e.width), str(e.height))
     	resized_bg = bg1.resize((e.width, e.height), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(50))
-    	# Define our image again
+    	# Define image again
     	new_bg = ImageTk.PhotoImage(resized_bg)
     	# Add it back to the canvas
     	my_canvas.create_image(0,0, image=new_bg, anchor="nw")
 
     #root.bind('<Configure>', resizer)
-    
-def ImageViewTab():
-    Clear()
 
+
+def PresetSelect(board):
+    print(board)
+    Clear()
+    presets = GetBoardPresets(board)
+    for preset in presets:
+        Button(root, **config, bg="dark gray", text=preset, command=lambda b = board, p = preset:ImageViewer(b + "/" + p)).pack(fill="x", pady=2)
+    Button(root, **config, bg="red", text="Back", command=lambda:BoardSelect()).pack(fill="x", pady=2)
+
+    
+# Presents user with board and when clicked will show all selections within that specified board
+# Will have the 'show all' in the board and preset menus
+def BoardSelect():
+    Clear()
+    boards = getBoards()
+    for board in boards:
+        Button(root, **config, bg="dark gray", text=board, command=lambda b = board:PresetSelect(b)).pack(fill="x", pady=2)
+    Button(root, **config, bg="dark gray", text="All", command=lambda:ImageViewer("all")).pack(fill="x", pady=2)
+    Button(root, **config, bg="red", text="Back", command=lambda:mainMenu()).pack(fill="x", pady=2)
+
+def ImageViewer(location):
+    Clear()
+    print(location)
+    folder = "E:/Media/4Chan/" + location
+
+    for a, b, files in os.walk(folder):
+        files = files                           # Adding video file removal, and trying to get image to root
+
+    for i in range(len(files)):
+        if ".webm" in files[i] or ".gif" in files[i]:
+            del files[i]
+            print(files[i])
+    print(files)
+
+    imagecanvas = Canvas(root, bg="#353839", borderwidth=0, highlightthickness=0)
+    imagecanvas.pack(fill="both", expand=True, anchor="n")
+
+    # Define image
+    image = Img1.open(folder + "/" + files[0])
+    bg = ImageTk.PhotoImage(image.resize((imagecanvas.winfo_width(), imagecanvas.winfo_height()), Img1.ANTIALIAS))
+
+    # Set image in canvas
+    imagecanvas.create_image(0,0, image=bg, anchor="nw")
 
 '''
 The main menu. Will configure it's button's settings with the function mainmenuInit which returns a dictionary of settings
@@ -138,7 +179,7 @@ def mainMenu():
     settings = mainmenuInit()
     main()
     Button(root, **config, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(), state=settings["state"]).pack(fill="x", pady=2)
-    Button(root, **config, text="Library", bg="dark gray", command=lambda:ImageViewTab()).pack(fill="x", pady=2)
+    Button(root, **config, text="Library", bg="dark gray", command=lambda:BoardSelect()).pack(fill="x", pady=2)
     Button(root, **config, text="Presets", bg="dark gray", command=lambda:addQueryMenu()).pack(fill="x", pady=2)
     Button(root, **config, text="Console", bg="dark gray", command=consoleMenu).pack(fill="x", pady=2)
     Button(root, **config, text="Settings", bg="dark gray").pack(fill="x", pady=2)
@@ -310,7 +351,16 @@ def checkIfProcessRunning(processName):
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
-    return False;
+    return False
+
+
+# Returns true if there are selection within the file Selections.txt and false if none are found
+def selectionsExist():
+    selections = getSelections()
+    if selections != None:
+        return True
+    elif selections == None:
+        return False
 
 
 # Will return true if the download process is running and false if not
@@ -321,13 +371,19 @@ def getMenuState():
         return "start"
 
 
-# Returns true if there are selection within the file Selections.txt and false if none are found
-def selectionsExist():
-    selections = getSelections()
-    if selections != None:
-        return True
-    elif selections == None:
-        return False
+# Scans the folder of a board passed in and returns a list of presets in that folder
+def GetBoardPresets(board='b'):
+    for root, dirs, files in os.walk("E:/Media/4Chan/" + board):
+        if len(dirs) == 0:
+            continue
+        return dirs
+
+
+# Scans the folders in the save location and returns a list of boards that have been created
+def getBoards():
+    a = os.walk("E:/Media/4Chan")
+    for i in a:
+    	return i[1]
 
 
 # Returns a list of all lines in Selections.txt
