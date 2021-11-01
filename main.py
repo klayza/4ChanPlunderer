@@ -2,6 +2,7 @@ from tkinter import messagebox, scrolledtext
 from PIL import ImageTk, Image as Img1, ImageFilter
 from tkinter import *
 import subprocess
+import ctypes
 import psutil
 import ast
 import ssl
@@ -51,7 +52,6 @@ def Clear():
     
 # Once the Start/Stop button is pushed it will either start or stop downloading depending on if the process is running or not
 def mainmenuControls():
-    print("\n\n\n", window.isrunning, window.issetup, window.missingenabledselections)
     if window.isrunning == False and window.issetup == False:
         f = open("EnabledSelections.txt", "r+")
         if f.readline == "":
@@ -90,7 +90,7 @@ def Exit():
 
 
 # Adds a canvas image to main menu screen
-def main():
+def DisplayImage(image="default"):
     global bg, my_canvas
 
     # Create a canvas
@@ -98,10 +98,13 @@ def main():
     my_canvas.pack(fill="both", expand=True, anchor="n")
 
     # Define image
-    image = Img1.open("hopper.jpg")
+    if image == "default":
+        image = Img1.open("hopper.jpg")
+    else:
+        image = Img1.open(image)
     root.update()
-    print(my_canvas.winfo_width(), my_canvas.winfo_height())
-    bg = ImageTk.PhotoImage(image.resize((my_canvas.winfo_width(), my_canvas.winfo_height()), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(2)))
+    #print(my_canvas.winfo_width(), my_canvas.winfo_height())
+    bg = ImageTk.PhotoImage(image.resize((my_canvas.winfo_width(), my_canvas.winfo_height()), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(0)))
 
     # Set image in canvas
     my_canvas.create_image(0,0, image=bg, anchor="nw")
@@ -112,7 +115,7 @@ def main():
     	# Open image
     	bg1 = Img1.open("hopper.jpg")
     	# Resize the image
-    	print(str(e.width), str(e.height))
+    	#print(str(e.width), str(e.height))
     	resized_bg = bg1.resize((e.width, e.height), Img1.ANTIALIAS).filter(filter=ImageFilter.GaussianBlur(50))
     	# Define image again
     	new_bg = ImageTk.PhotoImage(resized_bg)
@@ -122,13 +125,15 @@ def main():
     #root.bind('<Configure>', resizer)
 
 
+# Shown after clicking a board and will display images within a folder the preset name clicked
 def PresetSelect(board):
-    print(board)
     Clear()
     presets = GetBoardPresets(board)
     for preset in presets:
         Button(root, **config, bg="dark gray", text=preset, command=lambda b = board, p = preset:ImageViewer(b + "/" + p)).pack(fill="x", pady=2)
+    Button(root, **config, bg="red", text="All", command=lambda:ImageViewer(board, True)).pack(fill="x", pady=2)
     Button(root, **config, bg="red", text="Back", command=lambda:BoardSelect()).pack(fill="x", pady=2)
+
 
     
 # Presents user with board and when clicked will show all selections within that specified board
@@ -138,33 +143,65 @@ def BoardSelect():
     boards = getBoards()
     for board in boards:
         Button(root, **config, bg="dark gray", text=board, command=lambda b = board:PresetSelect(b)).pack(fill="x", pady=2)
-    Button(root, **config, bg="dark gray", text="All", command=lambda:ImageViewer("all")).pack(fill="x", pady=2)
+    Button(root, **config, bg="dark gray", text="All", command=lambda:ImageViewer("all", True)).pack(fill="x", pady=2)
     Button(root, **config, bg="red", text="Back", command=lambda:mainMenu()).pack(fill="x", pady=2)
 
-def ImageViewer(location):
+
+def ImageViewer(location, all=False, i=0):
     Clear()
-    print(location)
-    folder = "E:/Media/4Chan/" + location
+    folder = "E:/Media/4Chan"
+    files = []
+    images = []
 
-    for a, b, files in os.walk(folder):
-        files = files                           # Adding video file removal, and trying to get image to root
+    # Runs if user selected all files
+    if all and location == "all":
+        for r, d, f in os.walk(folder):
+            for file in f:
+                files.append(os.path.join(r, file))
+    
+    # Runs if user selected all within a board
+    elif all:
+        for r, d, f in os.walk(folder + "/" + location):
+            for file in f:
+                files.append(os.path.join(r, file))
 
-    for i in range(len(files)):
-        if ".webm" in files[i] or ".gif" in files[i]:
-            del files[i]
-            print(files[i])
-    print(files)
+    # Runs if user selected a particular preset within a board
+    else:  
+        for r, d, f in os.walk(folder + "/" + location):
+            for file in f:
+                files.append(os.path.join(r, file))
+    
+    # Appends files to new list with the file extension of .jpg or .png and removes the rest (.gif coming later)
+    for file in files:
+        if '.jpg' in file or '.png' in file:
+            images.append(file)
 
-    imagecanvas = Canvas(root, bg="#353839", borderwidth=0, highlightthickness=0)
-    imagecanvas.pack(fill="both", expand=True, anchor="n")
+    # Will check if there are any images, and if not will go back a page
+    if len(images) == 0:
+        messagebox.showinfo(title="Bruh", message="No images found")
+        BoardSelect()
+    
+    def Forward(i):
+        if i < len(images):
+            ImageViewer(location, all, i)
+        
 
-    # Define image
-    image = Img1.open(folder + "/" + files[0])
-    bg = ImageTk.PhotoImage(image.resize((imagecanvas.winfo_width(), imagecanvas.winfo_height()), Img1.ANTIALIAS))
+    def Backward(i):
+        if i >= 0:
+            ImageViewer(location, all, i)
+    
+    def Wallpaper():
+        ctypes.windll.user32.SystemParametersInfoW(20, 0, images[i] , 0)
 
-    # Set image in canvas
-    imagecanvas.create_image(0,0, image=bg, anchor="nw")
 
+    navigation = Frame(root, height=30, bg="tan")
+    navigation.pack(fill="x")
+    Button(navigation, text="-->", command=lambda:Forward(i + 1)).grid(padx="2", row=0, column=2, sticky="W")
+    Button(navigation, text="Exit", command=lambda:BoardSelect()).grid(padx="2", row=0, column=1)
+    Button(navigation, text="<--", command=lambda:Backward(i - 1)).grid(padx="2", row=0, column=0, sticky="E")
+    Button(navigation, text="Set Wallpaper", command=lambda:Wallpaper()).grid(padx="2", row=0, column=4, sticky="E")
+    DisplayImage(images[i])
+    
 '''
 The main menu. Will configure it's button's settings with the function mainmenuInit which returns a dictionary of settings
 First button will change to either start or stop depending on if the download process is running or not
@@ -177,7 +214,7 @@ Fifth will close the app and stop the download process
 def mainMenu():
     Clear()
     settings = mainmenuInit()
-    main()
+    DisplayImage()
     Button(root, **config, text=settings["text"], bg=settings["color"], command=lambda:mainmenuControls(), state=settings["state"]).pack(fill="x", pady=2)
     Button(root, **config, text="Library", bg="dark gray", command=lambda:BoardSelect()).pack(fill="x", pady=2)
     Button(root, **config, text="Presets", bg="dark gray", command=lambda:addQueryMenu()).pack(fill="x", pady=2)
