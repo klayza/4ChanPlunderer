@@ -94,7 +94,6 @@ def imageSaver(selections, destination=destination):
 def Download(url, destination):
     # Open the url image, set stream to True, this will return the stream content.
     r = requests.get(url, stream = True)
-    print("after")
 
     # Check if the image was retrieved successfully
     if r.status_code == 200:
