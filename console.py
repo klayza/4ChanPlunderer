@@ -7,6 +7,7 @@ import time
 import sys
 import ssl
 import ast
+import shutil
 
 # Console based version
 # Saves output to .txt and will display in the console section 
@@ -54,7 +55,7 @@ def imageSaver(selections, destination=destination):
 
                         # Sometimes there are no images on a comment hence the try, except
                         try:
-                            link = "https://is2.4chan.org/" + selections[1] + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]
+                            link = "https://i.4cdn.org/" + selections[1] + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]
                         except:
                             continue
 
@@ -65,8 +66,8 @@ def imageSaver(selections, destination=destination):
                         # If the same file exists it continues to avoid downloading again
                         if os.path.exists(destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]):
                             continue
-
-                        request.urlretrieve(link, destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
+                        
+                        Download(link, destination + "/" + selections[1] + "/" + selections[0].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
                         count += 1
                         f = open("console.txt", "a+")
                         if downloading:
@@ -89,7 +90,21 @@ def imageSaver(selections, destination=destination):
                         downloading = False
                         #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
     
-    
+
+def Download(url, destination):
+    # Open the url image, set stream to True, this will return the stream content.
+    r = requests.get(url, stream = True)
+    print("after")
+
+    # Check if the image was retrieved successfully
+    if r.status_code == 200:
+        # Set decode_content value to True, otherwise the downloaded image file's size will be zero.
+        r.raw.decode_content = True
+
+        # Open a local file with wb ( write binary ) permission.
+        with open(destination,'wb') as f:
+            shutil.copyfileobj(r.raw, f)
+
 
 def titleCleanup(text):
     tag = False
