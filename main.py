@@ -90,7 +90,7 @@ def Exit():
 
 
 # Adds a canvas image to main menu screen
-def DisplayImage(image="default"):
+def DisplayImage(image="default", resize="default"):
     global bg, my_canvas
 
     # Create a canvas
@@ -98,7 +98,7 @@ def DisplayImage(image="default"):
     my_canvas.pack(fill="both", expand=True, anchor="n")
 
     # Define image
-    if image == "default":
+    if image == "default" and resize == "default":
         image = Img1.open("hopper.jpg")
     else:
         image = Img1.open(image)
@@ -149,6 +149,7 @@ def BoardSelect():
 
 def ImageViewer(location, all=False, i=0):
     Clear()
+    global image                                    # Potentially dangerous
     folder = "E:/Media/4Chan"
     files = []
     images = []
@@ -175,6 +176,7 @@ def ImageViewer(location, all=False, i=0):
     for file in files:
         if '.jpg' in file or '.png' in file:
             images.append(file)
+            images.reverse()
 
     # Will check if there are any images, and if not will go back a page
     if len(images) == 0:
@@ -200,6 +202,7 @@ def ImageViewer(location, all=False, i=0):
     Button(navigation, text="Exit", command=lambda:BoardSelect()).grid(padx="2", row=0, column=1)
     Button(navigation, text="<--", command=lambda:Backward(i - 1)).grid(padx="2", row=0, column=0, sticky="E")
     Button(navigation, text="Set Wallpaper", command=lambda:Wallpaper()).grid(padx="2", row=0, column=4, sticky="E")
+    Button(navigation, text="Open Image", command=lambda i = images[i]:Img1.open(i).show()).grid(padx="2", row=0, column=5, sticky="E")
     DisplayImage(images[i])
     
 '''
