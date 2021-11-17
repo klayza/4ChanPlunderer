@@ -17,7 +17,7 @@ w, h = 400, 600
 
 root = Tk()
 
-config = {"width":53, "height":2, "font":"Consolas 21 bold"}
+config = {"width":53, "height":1, "font":"Consolas 21 bold"}
 root.title("4Chan-App")
 #root.geometry(f"{str(w)}x{str(h)}")
 root.configure(bg="#353839")
@@ -139,8 +139,11 @@ def PresetSelect(board):
 # Presents user with board and when clicked will show all selections within that specified board
 # Will have the 'show all' in the board and preset menus
 def BoardSelect():
-    Clear()
     boards = getBoards()
+    if boards == None:
+        messagebox.showinfo(message="No folders found", title="Bruh")
+        return
+    Clear()
     for board in boards:
         Button(root, **config, bg="dark gray", text=board, command=lambda b = board:PresetSelect(b)).pack(fill="x", pady=2)
     Button(root, **config, bg="dark gray", text="All", command=lambda:ImageViewer("all", True)).pack(fill="x", pady=2)
@@ -255,25 +258,35 @@ def checkBoxes():
     Clear()
     global varlist
     root.geometry()
-    newFrame = Frame(root, bg="#353839")
     count = 0
     varlist = []
+
+    # Will go to back to main menu if the user hasn't made a filter yet
+    if window.issetup:
+        Button(root, **config, bg="red", text="Back", command=lambda:mainMenu()).grid(row=3, column=0)
+    # Otherwise this will create a back button that will save the input to Selections.txt and return to main menu
+    else:
+        if varlist == None:
+            mainMenu()
+        else:
+            Button(root, **config, bg="red", text="Back", command=lambda:addEnabledSelection(varlist)).pack(pady=2, fill="x", anchor="s", side="bottom")
+
     for title in getSelections():
         # Iterates through lists in the Selections.txt
         title = title[0]
         titlevar = title + str(count)
         titlevar = StringVar(value=0)
 
-        c = Checkbutton(newFrame, **config, text=title, variable=titlevar, onvalue="1", offvalue="0", bg="dark gray", compound="top", relief="raised")
+        c = Checkbutton(root, **config, text=title, variable=titlevar, onvalue="1", offvalue="0", bg="dark gray", compound="top", relief="raised")
 
         # Checks box off if it is already selected
         if title in str(getSelections("EnabledSelections.txt")):
             c.select()
-        c.pack(anchor="w", pady=2, padx=2)
+        c.pack(anchor="w", pady=2, padx=2, fill="x", side="bottom")
 
         varlist.append(titlevar)
         count += 1
-    newFrame.grid(row=2, column=0)
+        
 
 
 # Retrieves the fields information and converts it into a list, then it's saved to Selections.txt
@@ -306,45 +319,31 @@ def addQueryMenu():
     Clear()
     if not window.issetup:
         checkBoxes()
+    windowwidth = root.winfo_width()
 
-    queryFrame = Frame(root, bg="dark gray")
+    queryFrame = Frame(root, bg="dark gray", width=windowwidth)
 
     title = StringVar()
     board = StringVar()
     whitelist = StringVar()
     blacklist = StringVar()
 
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Title:").grid(column=0, row=0, pady=2, padx=2, sticky="w")
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Board:").grid(column=0, row=1, pady=2, padx=2, sticky="w")
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Whitelist:").grid(column=0, row=2, pady=2, padx=2, sticky="w")
-    Label(queryFrame, bg="dark gray", font="Consolas 21 bold", text="Blacklist:").grid(column=0, row=3, pady=2, padx=2, sticky="w")
 
-    e1 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
-    e2 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
-    e3 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
-    e4 = Entry(queryFrame, bg="lightgray", font="Consolas 21 bold",)
+    Label(queryFrame, width=15, bg="dark gray", font="Consolas 21 bold", text="Title:").grid(pady="2", column=0, row=0)
+    Label(queryFrame, width=15, bg="dark gray", font="Consolas 21 bold", text="Board:").grid(pady="2", column=0, row=1)
+    Label(queryFrame, width=15, bg="dark gray", font="Consolas 21 bold", text="Whitelist:").grid(pady="2", column=0, row=2)
+    Label(queryFrame, width=15, bg="dark gray", font="Consolas 21 bold", text="Blacklist:").grid(pady="2", column=0, row=3)
 
-    e1.grid(column=1, row=0, pady=2)
-    e2.grid(column=1, row=1, pady=2)
-    e3.grid(column=1, row=2, pady=2)
-    e4.grid(column=1, row=3, pady=2)
+    e1 = Entry(queryFrame, width=15, bg="lightgray", font="Consolas 21 bold",).grid(pady="2", column=1, row=0)
+    e2 = Entry(queryFrame, width=15, bg="lightgray", font="Consolas 21 bold",).grid(pady="2", column=1, row=1)
+    e3 = Entry(queryFrame, width=15, bg="lightgray", font="Consolas 21 bold",).grid(pady="2", column=1, row=2)
+    e4 = Entry(queryFrame, width=15, bg="lightgray", font="Consolas 21 bold",).grid(pady="2", column=1, row=3)
 
-    Button(root, **config, bg="green", text="Save", command=lambda:addSearchIndex(e1, e2, e3, e4)).grid(row=1, column=0)
-    queryFrame.grid(column=0, row=0, sticky="n")
+    ################### Fix the e1-4 values. Not returning anything likely because of the .grid ########################
 
-    # Will go to back to main menu if the user hasn't made a filter yet
-    if window.issetup:
-        Button(root, **config, bg="red", text="Back", command=lambda:mainMenu()).grid(row=3, column=0)
-        root.geometry()
-    # Otherwise this will create a back button that will save the input to Selections.txt and return to main menu
-    else:
-        if varlist == None:
-            mainMenu()
-        else:
-            Button(root, **config, bg="red", text="Back", command=lambda:addEnabledSelection(varlist)).grid(row=3, column=0)
-            root.geometry()
-    
-
+    Button(queryFrame, **config, bg="green", text="Save", command=lambda a=e1, b=e2, c=e3, d=e4:addSearchIndex(a, b, c, d)).grid(row=4, columnspan=2)
+    queryFrame.pack()
+    root.geometry()    
 
 # A menu that will display what the console has been outputting, time, file, match, board, etc.
 def consoleMenu():
