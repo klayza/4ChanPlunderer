@@ -2,17 +2,27 @@ from urllib import request
 from datetime import datetime
 from tkinter import *
 import requests
-import os
+import shutil
 import time
 import sys
 import ssl
 import ast
-import shutil
+import os
 
 # Console based version
 # Saves output to .txt and will display in the console section 
 
-destination = "E:/Media/4Chan"
+while True:
+    destination = input("Enter your destination folder: ")
+    if destination == "df":
+        destination = "D:/Media/4Chan"
+    if not os.path.exists(destination):
+        res = input("This path wasn't found, create one? ").upper()
+        if "Y" in res:
+            os.mkdir(destination)
+            break
+        continue
+    break
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination=destination):
@@ -159,7 +169,13 @@ seconds = 360
 while True:
     # [Title, Board, [Whitelists], [Blacklists]]
     for selection in getSelections():
-        imageSaver(selection)
+        try:
+            imageSaver(selection)
+        except requests.exceptions.SSLError:
+            res = input("There was a problem connecting, try again? ").upper()
+            if "N" in res:
+                exit()
+            
 
     with open("console.txt", "a+") as f:
             f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(seconds)))   
