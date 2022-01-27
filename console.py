@@ -1,6 +1,5 @@
 from urllib import request
 from datetime import datetime
-from tkinter import *
 import requests
 import shutil
 import time
