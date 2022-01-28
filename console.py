@@ -6,7 +6,6 @@ import json
 import time
 import sys
 import ssl
-import ast
 import os
 
 # Console based version
@@ -233,12 +232,12 @@ print("Use commands 'Create' or 'Start'")
 while True:
     command = input("> ").upper()
     if command == "CREATE":
-        CreateSelections("a")
+        CreateSelections("a+")
         continue
     if command == "START":
         if not os.path.exists("Config.json"):
             print("Search paramaters were not found, let's make one")
-            CreateSelections()
+            CreateSelections("w+")
 
     destination = input("Enter your destination folder: ")
     if destination == "df":
@@ -251,7 +250,7 @@ while True:
         continue
     if not os.path.exists("Config.json"):
         print("Search paramaters were not found, let's make one")
-        CreateSelections()
+        CreateSelections("w+")
     break
 
 
@@ -264,6 +263,8 @@ while True:
             res = input("There was a problem connecting, try again? ").upper()
             if "N" in res:
                 exit()
+            else:
+                continue
             
     with open("console.txt", "a+") as f:
             f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(WaitTime)))   
