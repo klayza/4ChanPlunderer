@@ -11,49 +11,8 @@ import os
 # Console based version
 # Saves output to .txt and will display in the console section 
 
-Default = "../../Desktop/4Chan"
+Default = "G:/Media/4Chan"
 WaitTime = 360
-
-# Will save a txt file with search paramaters
-def CreateSelections(): # REQ: Add ability to check if board entered is valid
-    W_terms = []
-    B_terms = []
-    count = 0
-    board = input("Enter board name: ")
-
-    print("Press enter when done")
-    while True:
-        term = input("Enter a search term: ")
-        if term == "" and count > 0:
-            break
-        W_terms.append(term)
-        count += 1
-    count = 0
-
-    print("If blacklist not needed just press enter")
-    while True:
-        term = input("Enter a word to blacklist: ")
-        if term == "" and count == 0:
-            B_terms.append("")
-            break
-        if term == "" and count > 0:
-            break
-        B_terms.append(term)
-        count += 1
-    title = input("Enter the title for this config: ")
-        
-    config = {
-        "Title": title,
-        "Board": board,
-        "Whitelist": W_terms,
-        "Blacklist": B_terms
-             }
-
-    config_json = json.dumps(config)
-
-    with open("Config.json", "w+") as f:
-        f.write(config_json)
-
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination):
@@ -179,13 +138,16 @@ def animate(seconds):
 
 
 # Will save a txt file with search paramaters
-def CreateSelections(type): # REQ: Add ability to check if board entered is valid
+def CreateSelections(mode): # REQ: Add ability to check if board entered is valid
     W_terms = []
     B_terms = []
     count = 0
     board = input("Enter board name: ")
 
     print("Press enter when done")
+
+    # Adds search terms to W_terms until user enters a blank key
+    # Count will determine if the user entered a blank key or not
     while True:
         term = input("Enter a search term: ")
         if term == "" and count > 0:
@@ -194,6 +156,7 @@ def CreateSelections(type): # REQ: Add ability to check if board entered is vali
         count += 1
     count = 0
 
+    # Adds blacklist terms to B_terms
     print("If blacklist not needed just press enter")
     while True:
         term = input("Enter a word to blacklist: ")
@@ -213,14 +176,23 @@ def CreateSelections(type): # REQ: Add ability to check if board entered is vali
         "Blacklist": B_terms
              }]
 
+    # Will run if the config file already exists
+    if os.path.exists("Config.json"):
+        config = {
+            "Title": title,
+            "Board": board,
+            "Whitelist": W_terms,
+            "Blacklist": B_terms
+                }
+        previous = GetSelections()
+        previous.append(config)
+        config = previous
+        mode = "w+"
+
     config_json = json.dumps(config)
 
-    with open("Config.json", type) as f:
+    with open("Config.json", mode) as f:
         f.write(config_json)
-
-
-def IsValidBoard(board):
-    pass
 
 
 def GetSelections():
@@ -228,7 +200,7 @@ def GetSelections():
         return json.load(f)
 
 
-print("Use commands 'Create' or 'Start'")
+print("Use commands 'Create' or 'Start'")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
 while True:
     command = input("> ").upper()
     if command == "CREATE":
@@ -238,6 +210,8 @@ while True:
         if not os.path.exists("Config.json"):
             print("Search paramaters were not found, let's make one")
             CreateSelections("w+")
+    
+    else:   continue
 
     destination = input("Enter your destination folder: ")
     if destination == "df":
