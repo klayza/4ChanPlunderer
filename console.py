@@ -1,11 +1,9 @@
-from urllib import request
 from datetime import datetime
 import requests
 import shutil
 import json
 import time
 import sys
-import ssl
 import os
 
 # Console based version; Saves and organizes images from 4chan with filter
@@ -15,7 +13,7 @@ WaitTime = 360
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
 def imageSaver(selections, destination):
-    ssl._create_default_https_context = ssl._create_unverified_context
+    # ssl._create_default_https_context = ssl._create_unverified_context 
     json = requests.get("https://a.4cdn.org/" + selections["Board"] + "/catalog.json").json()
     count = 0
 
