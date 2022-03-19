@@ -1,5 +1,5 @@
 # 4ChanPlunderer
-Program for downloading images from 4chan with filters 
+Program for downloading images and videos from 4Chan with filters 
 ###### Useful if you regularly visit specific threads, and want to automate that process
 
 - Use multiple whitelist, blacklist filters
