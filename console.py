@@ -8,10 +8,9 @@ import sys
 import ssl
 import os
 
-# Console based version
+# Console based version; Saves and organizes images from 4chan with filter
 # Saves output to .txt and will display in the console section 
 
-Default = "G:/Media/4Chan"
 WaitTime = 360
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
@@ -110,14 +109,14 @@ def titleCleanup(text):
     a = ""
     apostrophe = "&#039;"
     for letter in text:
-            if letter == "<":
-                tag = True
-            elif letter == ">":
-                tag = False
-            elif tag:
-                continue
-            else:
-                a += letter
+        if letter == "<":
+            tag = True
+        elif letter == ">":
+            tag = False
+        elif tag:
+            continue
+        else:
+            a += letter
     if apostrophe in a:
         a = a.replace(apostrophe, "'")
         return a
@@ -125,16 +124,21 @@ def titleCleanup(text):
 
 # Simple animation
 def animate(seconds):
-    for i in range(seconds // 4):
-        sys.stdout.write('\rSearching')
-        time.sleep(1)
-        sys.stdout.write('\rSearching .')
-        time.sleep(1)
-        sys.stdout.write('\rSearching . .')
-        time.sleep(1)
-        sys.stdout.write('\rSearching . . .')
-        time.sleep(1)
-    sys.stdout.write('\r')
+    try:
+        for i in range(seconds // 4):
+            sys.stdout.write('\rSearching')
+            time.sleep(1)
+            sys.stdout.write('\rSearching .')
+            time.sleep(1)
+            sys.stdout.write('\rSearching . .')
+            time.sleep(1)
+            sys.stdout.write('\rSearching . . .')
+            time.sleep(1)
+        sys.stdout.write('\r')
+    except KeyboardInterrupt:
+        print("\nStopped")
+        main()
+        
 
 
 # Will save a txt file with search paramaters
@@ -199,37 +203,46 @@ def GetSelections():
     with open("Config.json", "r+") as f:
         return json.load(f)
 
+def main():
+    print("Use commands '(C)reate' or '(S)tart'")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
+    while True:
+        command = input("> ").upper()
+        if "C" in command:
+            CreateSelections("a+")
+            continue
+        if "S" in command:
+            if not os.path.exists("Config.json"):
+                print("Search paramaters were not found, let's make one")
+                CreateSelections("w+")
+        # Makes a file to store destination
+        if not os.path.exists("Destination.txt"):
+            with open("Destination.txt", "w") as f:
+                f.write("")
+            print("Destination.txt was created, enter a path")
+            continue
 
-print("Use commands 'Create' or 'Start'")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
-while True:
-    command = input("> ").upper()
-    if command == "CREATE":
-        CreateSelections("a+")
-        continue
-    if command == "START":
+        # When specifying the path, note that this program will add folders based on the board name
+        with open("Destination.txt", "r+") as f:
+            global destination 
+            destination = f.read()
+            if not os.path.isdir(destination):
+                print("Path is invalid in Destinations.txt")
+                continue
+
+        if not os.path.exists(destination):
+            res = input("This path doesn't already exist, create one? ").upper()
+            if "Y" in res:
+                os.mkdir(destination)
+                break
+            continue
         if not os.path.exists("Config.json"):
             print("Search paramaters were not found, let's make one")
             CreateSelections("w+")
-    
-    else:   continue
+        break
 
-    destination = input("Enter your destination folder: ")
-    if destination == "df":
-        destination = Default
-    if not os.path.exists(destination):
-        res = input("This path wasn't found, create one? ").upper()
-        if "Y" in res:
-            os.mkdir(destination)
-            break
-        continue
-    if not os.path.exists("Config.json"):
-        print("Search paramaters were not found, let's make one")
-        CreateSelections("w+")
-    break
-
-
+main()
+print("Starting search, use Ctrl + C to stop")
 while True:
-    # [Title, Board, [Whitelists], [Blacklists]]
     for selection in GetSelections():
         try:
             imageSaver(selection, destination)
