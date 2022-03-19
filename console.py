@@ -216,7 +216,7 @@ def main():
                 CreateSelections("w+")
         # Makes a file to store destination
         if not os.path.exists("Destination.txt"):
-            with open("Destination.txt", "w") as f:
+            with open("destination.txt", "w") as f:
                 f.write("")
             print("Destination.txt was created, enter a path")
             continue
