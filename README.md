@@ -10,6 +10,7 @@ Program for downloading images and videos from 4Chan with filters
 1. ```pip install requests``` 
 2. ```python console.py```
 3. Follow the command prompts! :3 
+###### Note: Don't use the gui, it's broken lol
 
 ## Roadmap 
 #### There was at one point a functional gui using tkinter, but that had it's limitations so I'll eventually do a port on winforms
