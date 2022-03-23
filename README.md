@@ -8,6 +8,7 @@ Program for downloading images and videos from 4Chan with filters
 
 ## Setup
 1. ```pip install requests``` 
+1. ```pip install matplotlib``` 
 2. ```python console.py```
 3. Follow the command prompts! :3 
 ###### Note: Don't use the gui, it's broken lol
@@ -16,7 +17,6 @@ Program for downloading images and videos from 4Chan with filters
 #### There was at one point a functional gui using tkinter, but that had it's limitations so I'll eventually do a port on winforms
 ###### (In order of importance)
 - Ability to toggle different filters for console
-- Stats page that displays a line graph of downloads 
 - When given blank entry add blank string
 - Save button will show the recently added checkboxes
 - Upon setup user can save multiple queries at a time before pressing back
@@ -27,6 +27,7 @@ Program for downloading images and videos from 4Chan with filters
 
 
 ## Completed
+- Stats page that displays a line graph of downloads 
 - Implement tab to show console
 - Allow user to toggle which selections will be used
 - Get start/stop to work while downloading images

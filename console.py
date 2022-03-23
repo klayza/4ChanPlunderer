@@ -1,3 +1,4 @@
+import matplotlib.pyplot as pp
 from datetime import datetime
 import requests
 import shutil
@@ -138,7 +139,6 @@ def animate(seconds):
         main()
         
 
-
 # Will save a txt file with search paramaters
 def CreateSelections(mode): # REQ: Add ability to check if board entered is valid
     W_terms = []
@@ -201,17 +201,108 @@ def GetSelections():
     with open("Config.json", "r+") as f:
         return json.load(f)
 
+
+def DataSomething(Folder, TimePeriodAmount):
+    Times = []
+    DataSet = []
+    CurrentTimes = []
+    path, dirs, files = next(os.walk(Folder))
+    for file in files:
+        Times.append(int(os.path.getctime(path + "/" + file)))
+        Times.sort()
+        StartDate = Times[0]
+        EndDate = Times[-1]
+    TimePeriod = StartDate + TimePeriodAmount
+    for Time in Times:
+        if Time <= TimePeriod:
+            CurrentTimes.append(Time)
+        else: 
+            DataSet.append(CurrentTimes)
+            CurrentTimes = []
+            TimePeriod += TimePeriodAmount
+    return DataSet
+
+
+def GraphData(Folder, TimePeriodAmount):
+    Dates = DataSomething(Folder, TimePeriodAmount)
+    StartDate = time.strftime("%b %d, %Y", time.localtime(Dates[0][0]))
+    if TimePeriodAmount == 2628288:
+        pp.xlabel("Months since " + StartDate)
+    elif TimePeriodAmount == 604800:
+        pp.xlabel("Weeks since " + StartDate)
+    elif TimePeriodAmount == 86400:
+        pp.xlabel("Days since " + StartDate)
+    else:
+        pp.xlabel("Time since " + StartDate)
+
+    pp.ylabel("Files")
+    x_values = [i for i in range(len(Dates))]
+    y_values = []
+
+    Sum = 0
+    for Date in Dates:
+        Sum += len(Date)
+        y_values.append(Sum)
+        if Date == Dates[-1]:
+            pp.title(str(Sum) + " files")
+    pp.plot(x_values, y_values)
+    pp.show()
+
+
+# Reads the text file for destination. If invalid path returns none.
+def GetDestination():
+    with open("Destination.txt", "r+") as f: 
+        destination = f.read()
+        if not os.path.isdir(destination):
+            return None
+        return destination
+
+
 def main():
-    print("Use commands '(C)reate' or '(S)tart'")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
+    print("Use commands (C)reate, (S)tart, (St)ats")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
     while True:
+
         command = input("> ").upper()
-        if "C" in command:
+        if command == "CREATE" or command == "C":
             CreateSelections("a+")
             continue
-        if "S" in command:
+
+        elif command == "START" or command == "S":
             if not os.path.exists("Config.json"):
                 print("Search paramaters were not found, let's make one")
                 CreateSelections("w+")
+
+        # Displays the user a graph of their collection
+        elif command == "STATS" or command == "ST":
+
+            # Looks through the desination folder for board folders
+            print("Select a board by entering a number")
+            boards = os.listdir(GetDestination())
+            if boards == None:
+                print("Path is invalid in Destinations.txt")
+                continue
+            elif len(boards) == 0:
+                print("No boards were found, try running the program first")
+            for i in range(len(boards)):
+                print(str(i + 1) + " - " + boards[i])
+            board_selected = boards[int(input("> ")) - 1]
+
+            # Gets a list of the folders in chosen board
+            print("Choose a folder by entering a number")
+            folders = os.listdir(GetDestination() + "/" + board_selected)
+            for i in range(len(folders)):
+                print(str(i + 1) + " - " + folders[i])
+            folder_selected = folders[int(input("> ")) - 1]
+            final_folder = GetDestination() + "/" + board_selected + "/" + folder_selected
+            
+            # Opens graph
+            if os.path.isdir(final_folder):
+                print("Processing graph, close graph to continue")
+                GraphData(final_folder, 86400)
+                main()
+            
+        else: continue
+
         # Makes a file to store destination
         if not os.path.exists("Destination.txt"):
             with open("destination.txt", "w") as f:
@@ -239,19 +330,23 @@ def main():
         break
 
 main()
-print("Starting search, use Ctrl + C to stop")
-while True:
-    for selection in GetSelections():
-        try:
-            imageSaver(selection, destination)
-        except requests.exceptions.SSLError:
-            res = input("There was a problem connecting, try again? ").upper()
-            if "N" in res:
-                exit()
-            else:
-                continue
-            
-    with open("console.txt", "a+") as f:
-            f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(WaitTime)))   
-            f.close() 
-    animate(WaitTime)
+try:
+    print("Starting search, use Ctrl + C to stop")
+    while True:
+        for selection in GetSelections():
+            try:
+                imageSaver(selection, destination)
+            except requests.exceptions.SSLError:
+                res = input("There was a problem connecting, try again? ").upper()
+                if "N" in res:
+                    exit()
+                else:
+                    continue
+                
+        with open("console.txt", "a+") as f:
+                f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(WaitTime)))   
+                f.close() 
+        animate(WaitTime)
+except KeyboardInterrupt:
+    print("Stopped")
+    main()
