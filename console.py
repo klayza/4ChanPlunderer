@@ -10,6 +10,8 @@ import os
 # Console based version; Saves and organizes images from 4chan with filter
 # Saves output to .txt and will display in the console section 
 
+# Before starting goto 4chan.org and click accept
+
 WaitTime = 360
 
 # Pass in a board, preset/keyword to search for, and the destination of your downloaded images
