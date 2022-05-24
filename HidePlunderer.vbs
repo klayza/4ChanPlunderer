@@ -1,0 +1,1 @@
+CreateObject("Wscript.Shell").Run "%homepath%/repos/4ChanPlunderer/4ChanPlunderer.bat", 0, True
