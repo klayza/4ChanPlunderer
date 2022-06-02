@@ -16,10 +16,10 @@ Program for downloading images and videos from 4Chan with filters
 
 Use if you want this program to run in the background on startup
 
-1. Copy silent.vbs to ```C:\Users\{user}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup```
-2. Edit silent.vbs and change path to program directory
+1. Edit silent.vbs and link.bat path within their files
+2. Copy silent.vbs to ```C:\Users\{user}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup```
 
-###### Note: I'd reccomend keeping a 'repos' folder in the user's home directory, just preference tho :)
+###### Note: This process will be much more simpler in the future, just bear with me lol
 
 ## Roadmap 
 #### There was at one point a functional gui using tkinter, but that had it's limitations so I'll eventually do a port on winforms
