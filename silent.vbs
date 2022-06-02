@@ -1,0 +1,1 @@
+CreateObject("Wscript.Shell").Run "python %homepath%/Repos/4ChanPlunderer/silent.pyw", 0, True

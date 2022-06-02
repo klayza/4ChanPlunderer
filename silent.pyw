@@ -73,7 +73,7 @@ def imageSaver(selections, destination):
                         
                         Download(link, destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
                         count += 1
-                        f = open("console.txt", "a+")
+                        f = open("console.txt", "a+", encoding="utf-8")
                         if downloading:
                             
                             print("--------------------------------------------------------------------------------------------")
