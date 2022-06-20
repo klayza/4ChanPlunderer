@@ -225,7 +225,7 @@ def DataSomething(Folder, TimePeriodAmount):
     return DataSet
 
 
-def GraphData(Folder, TimePeriodAmount):
+def GraphData(Title, Folder, TimePeriodAmount):
     Dates = DataSomething(Folder, TimePeriodAmount)
     StartDate = time.strftime("%b %d, %Y", time.localtime(Dates[0][0]))
     if TimePeriodAmount == 2628288:
@@ -246,7 +246,7 @@ def GraphData(Folder, TimePeriodAmount):
         Sum += len(Date)
         y_values.append(Sum)
         if Date == Dates[-1]:
-            pp.title(str(Sum) + " files")
+            pp.title(f"Files in {Title}: {str(Sum)}")
     pp.plot(x_values, y_values)
     pp.show()
 
@@ -260,8 +260,15 @@ def GetDestination():
         return destination
 
 
+def CreateDestination():
+    path = input("Enter a path for the 4Chan Directory: ")
+    with open("destination.txt", "w") as f:
+        f.write(path)
+    print(f"Destination.txt was created, {path} will be used")
+
+
 def main():
-    print("Use commands (C)reate, (S)tart, (St)ats")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
+    print("Use commands (C)reate, (S)tart, (St)ats, (E)dit, (Ex)it")   # Add feature to ask user if they want to autoatically start when running program when 'Start' is entered for the first time. Also ask for a default directory
     while True:
 
         command = input("> ").upper()
@@ -276,6 +283,11 @@ def main():
 
         # Displays the user a graph of their collection
         elif command == "STATS" or command == "ST":
+
+            if not os.path.exists("destination.txt"):
+                print("Destination not set yet, let's create one")
+                CreateDestination()
+                continue
 
             # Looks through the desination folder for board folders
             print("Select a board by entering a number")
@@ -300,16 +312,27 @@ def main():
             # Opens graph
             if os.path.isdir(final_folder):
                 print("Processing graph, close graph to continue")
-                GraphData(final_folder, 86400)
+                GraphData(folder_selected, final_folder, 86400)
                 main()
+
+        # Opens the config.json
+        elif command == "E" or command == "EDIT":
+            if os.path.exists("Config.json"):
+                os.system("Config.json")
+                continue
+            else:
+                print("Search paramaters were not found, let's make one")
+                CreateSelections("w+")
+                continue
+
+        elif command == "EX" or command == "EXIT":
+            exit()
             
         else: continue
 
         # Makes a file to store destination
         if not os.path.exists("Destination.txt"):
-            with open("destination.txt", "w") as f:
-                f.write("")
-            print("Destination.txt was created, enter a path")
+            CreateDestination()
             continue
 
         # When specifying the path, note that this program will add folders based on the board name
@@ -331,24 +354,36 @@ def main():
             CreateSelections("w+")
         break
 
-main()
-try:
-    print("Starting search, use Ctrl + C to stop")
-    while True:
-        for selection in GetSelections():
-            try:
-                imageSaver(selection, destination)
-            except requests.exceptions.SSLError:
-                res = input("There was a problem connecting, try again? ").upper()
-                if "N" in res:
-                    exit()
-                else:
-                    continue
+def mainSearchLoop():
+    try:
+        print("Starting search, use Ctrl + C to stop")
+        while True:
+            for selection in GetSelections():
+                try:
+                    imageSaver(selection, destination)
+                except requests.exceptions.SSLError:
+                    res = input("There was a problem connecting, try again? ").upper()
+                    if "N" in res:
+                        exit()
+                    else:
+                        continue
                 
-        with open("console.txt", "a+") as f:
-                f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(WaitTime)))   
-                f.close() 
-        animate(WaitTime)
-except KeyboardInterrupt:
-    print("Stopped")
-    main()
+            with open("console.txt", "a+") as f:
+                    f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(WaitTime)))   
+                    f.close() 
+            animate(WaitTime)
+    except KeyboardInterrupt:
+        print("Stopped")
+        main()
+
+def mainLoop():
+    while True:
+        try:
+            main()
+            mainSearchLoop()
+        except KeyboardInterrupt:
+            print("Back")
+            main()
+            mainSearchLoop()
+
+mainLoop()
