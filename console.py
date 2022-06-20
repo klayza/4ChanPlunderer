@@ -330,19 +330,17 @@ def main():
             
         else: continue
 
+        '''
+        Below only executes when user wants to start searching
+        '''
+
         # Makes a file to store destination
         if not os.path.exists("Destination.txt"):
             CreateDestination()
-            continue
 
         # When specifying the path, note that this program will add folders based on the board name
-        with open("Destination.txt", "r+") as f:
-            global destination 
-            destination = f.read()
-            if not os.path.isdir(destination):
-                print("Path is invalid in Destinations.txt")
-                continue
-
+        global destination 
+        destination = GetDestination()
         if not os.path.exists(destination):
             res = input("This path doesn't already exist, create one? ").upper()
             if "Y" in res:
