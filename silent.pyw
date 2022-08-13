@@ -71,28 +71,34 @@ def imageSaver(selections, destination):
                         if os.path.exists(destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"]):
                             continue
                         
-                        Download(link, destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
+                        try:
+                            Download(link, destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
+                        except requests.exceptions.ConnectionError:
+                            print("Error connecting, retrying in 30 seconds")
+                            time.sleep(30)
+                            mainSearchLoop()
+                            
                         count += 1
                         f = open("console.txt", "a+", encoding="utf-8")
                         if downloading:
-                            
-                            print("--------------------------------------------------------------------------------------------")
-                            f.write("\n--------------------------------------------------------------------------------------------")
+                            now = datetime.now()
 
-                            print(datetime.now().strftime("%H:%M") + " | Link: https://boards.4chan.org/" + selections["Board"] + "/thread/" + str(json[page]["threads"][thread]["no"]))
-                            f.write("\n" + datetime.now().strftime("%H:%M") + " | Link: https://boards.4chan.org/" + selections["Board"] + "/thread/" + str(json[page]["threads"][thread]["no"]))
+                            print(f"{'-'*92}")
+                            f.write(f"\n{'-'*92}")
 
-                            print(datetime.now().strftime("%H:%M") + " | Thread: " + title + " | /" + selections["Board"] + "/")
-                            f.write("\n" + datetime.now().strftime("%H:%M") + " | Thread: " + title + " | /" + selections["Board"] + "/")
+                            print(now.strftime("%H:%M") + " | Link: https://boards.4chan.org/" + selections["Board"] + "/thread/" + str(json[page]["threads"][thread]["no"]))
+                            f.write("\n" + now.strftime("%D") + " " + now.strftime("%H:%M") + " | Link: https://boards.4chan.org/" + selections["Board"] + "/thread/" + str(json[page]["threads"][thread]["no"]))
 
-                            print(datetime.now().strftime("%H:%M") + " | Match: " + word)
-                            f.write("\n" + datetime.now().strftime("%H:%M") + " | Match: " + word)
+                            print(now.strftime("%H:%M") + " | Thread: " + title + " | /" + selections["Board"] + "/")
+                            f.write("\n" + now.strftime("%D") + " " + now.strftime("%H:%M") + " | Thread: " + title + " | /" + selections["Board"] + "/")
 
-                        print(datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
-                        f.write("\n" + (datetime.now().strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count)))
+                            print(now.strftime("%H:%M") + " | Match: " + word)
+                            f.write("\n" + now.strftime("%D") + " " + now.strftime("%H:%M") + " | Match: " + word)
+
+                        print(now.strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
+                        f.write("\n" + now.strftime("%D") + " " + now.strftime("%H:%M") + " | Downloaded: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + selections["Board"] + "/" + selections["Title"].capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " | " + str(count))
                         f.close()
                         downloading = False
-                        #sys.stdout.write("\rDownloading: " + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"] + " to " + destination + "/" + board + "/" + preset.capitalize() + "/" + str(c["posts"][comment]["tim"]) + c["posts"][comment]["ext"])
     
 
 def Download(url, destination):
@@ -342,6 +348,31 @@ def main():
         break
 
 
+def mainSearchLoop():
+    try:
+        print("Starting search, use Ctrl + C to stop")
+        while True:
+            for selection in GetSelections():
+                try:
+                    imageSaver(selection, destination)
+                except requests.exceptions.SSLError:
+                    res = input("There was a problem connecting, try again? ").upper()
+                    if "N" in res:
+                        exit()
+                    else:
+                        continue
+                
+            with open("console.txt", "a+") as f:
+                now = datetime.now()
+                f.write("\n" + now.strftime("%D") + " " + now.strftime("%H:%M") + " | Waiting " + str(WaitTime))
+                f.close() 
+            animate(WaitTime)
+    except KeyboardInterrupt:
+        print("Stopped")
+        main()
+
+
+
 while True:
     for selection in GetSelections():
         try:
@@ -353,6 +384,7 @@ while True:
                 exit()
 
     with open("console.txt", "a+") as f:
-            f.write("\n" + (datetime.now().strftime("%H:%M") + " | Waiting " + str(WaitTime)))   
-            f.close() 
+        now = datetime.now()
+        f.write("\n" + now.strftime("%D") + " " + now.strftime("%H:%M") + " | Waiting " + str(WaitTime))
+        f.close() 
     animate(WaitTime)
