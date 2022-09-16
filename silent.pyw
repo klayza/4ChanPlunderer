@@ -50,7 +50,7 @@ def imageSaver(selections, destination):
             for word in selections["Whitelist"]:
 
                 # Will go into this block if the comment of a post matches one of the keywords
-                if word in title:
+                if word.lower() in title:
                     # Gets the .json of the thread
                     c = requests.get("https://a.4cdn.org/" + selections["Board"] + "/thread/" + str(json[page]["threads"][thread]["no"]) + ".json").json()
 
